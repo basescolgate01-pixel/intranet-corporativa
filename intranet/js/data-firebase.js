@@ -1,8 +1,20 @@
 // ============================================================
-// DATA STORE — Intranet Corporativa v2
+// DATA STORE — Intranet Corporativa v2 + Firebase (No ES6 Modules)
 // ============================================================
 
-const DB_KEY = 'intranet_db';
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyAMaT2ZiRieAfHtCiAs4y1nJhFCMuJLIgc",
+  authDomain: "intranet-corporativa-b75d6.firebaseapp.com",
+  projectId: "intranet-corporativa-b75d6",
+  storageBucket: "intranet-corporativa-b75d6.firebasestorage.app",
+  messagingSenderId: "929243835034",
+  appId: "1:929243835034:web:111c1ca5cb52fc06fccd23"
+};
+
+let _db = null;
+let _cache = null;
+let _dbReady = false;
 
 const DEFAULT_DB = {
   users: [
@@ -12,49 +24,71 @@ const DEFAULT_DB = {
     { id:4, username:'crodriguez', password:'Pass123!',   name:'Carlos Rodríguez',      role:'user',  email:'crodriguez@empresa.com',  department:'Finanzas',      avatar:'CR', profilePhoto:null, active:true,  createdAt:'2025-02-10' }
   ],
   panels: [
-    { id:1, title:'Dashboard de Ventas',    description:'KPIs y métricas de ventas en tiempo real',   embedUrl:'https://app.powerbi.com/reportEmbed?reportId=DEMO1', category:'Ventas',    icon:'📊', iconUrl:null, color:'#E3000F', createdAt:'2025-01-10', createdBy:1 },
-    { id:2, title:'Análisis de Marketing',  description:'Campañas, alcance y conversiones',            embedUrl:'https://app.powerbi.com/reportEmbed?reportId=DEMO2', category:'Marketing', icon:'📈', iconUrl:null, color:'#2563EB', createdAt:'2025-01-20', createdBy:1 },
-    { id:3, title:'Reporte Financiero',     description:'P&L, flujo de caja y presupuesto',            embedUrl:'https://app.powerbi.com/reportEmbed?reportId=DEMO3', category:'Finanzas',  icon:'💰', iconUrl:null, color:'#1A9B3C', createdAt:'2025-02-05', createdBy:1 }
+    { id:1, title:'Dashboard de Ventas',   description:'KPIs y métricas de ventas en tiempo real', embedUrl:'https://app.powerbi.com/reportEmbed?reportId=DEMO1', category:'Ventas',    icon:'📊', iconUrl:null, color:'#E3000F', createdAt:'2025-01-10', createdBy:1 },
+    { id:2, title:'Análisis de Marketing', description:'Campañas, alcance y conversiones',          embedUrl:'https://app.powerbi.com/reportEmbed?reportId=DEMO2', category:'Marketing', icon:'📈', iconUrl:null, color:'#2563EB', createdAt:'2025-01-20', createdBy:1 },
+    { id:3, title:'Reporte Financiero',    description:'P&L, flujo de caja y presupuesto',          embedUrl:'https://app.powerbi.com/reportEmbed?reportId=DEMO3', category:'Finanzas',  icon:'💰', iconUrl:null, color:'#1A9B3C', createdAt:'2025-02-05', createdBy:1 }
   ],
   permissions: { 1:[1,2,3], 2:[1,3], 3:[1,4] },
-  logs: [
-    { id:1, userId:1, action:'LOGIN', detail:'Inicio de sesión', ts:new Date(Date.now()-3600000).toISOString() }
-  ],
-  // favorites: { userId: [panelId, ...] }
+  logs: [{ id:1, userId:1, action:'LOGIN', detail:'Inicio de sesión', ts: new Date().toISOString() }],
   favorites: {},
-  // notifications: [{ id, userId, type, message, read, ts }]
   notifications: []
 };
 
-// ---- Init ----
-function initDB() {
-  if (!localStorage.getItem(DB_KEY)) {
-    localStorage.setItem(DB_KEY, JSON.stringify(DEFAULT_DB));
-    return;
+// ============================================================
+// INIT Firebase
+// ============================================================
+function initFirebase() {
+  if (window.firebase && !_db) {
+    firebase.initializeApp(firebaseConfig);
+    _db = firebase.firestore();
+    loadFromFirebase();
   }
-  // Migrate: add missing fields to existing DB
-  const db = JSON.parse(localStorage.getItem(DB_KEY));
-  let changed = false;
-  if (!db.favorites)     { db.favorites = {};     changed = true; }
-  if (!db.notifications) { db.notifications = []; changed = true; }
-  db.users.forEach(u => {
-    if (u.profilePhoto === undefined) { u.profilePhoto = null; changed = true; }
-    if (u.active === undefined)       { u.active = true;       changed = true; }
-  });
-  if (changed) localStorage.setItem(DB_KEY, JSON.stringify(db));
 }
 
+async function loadFromFirebase() {
+  try {
+    const doc = await _db.collection('intranet').doc('db').get();
+    if (doc.exists) {
+      _cache = doc.data();
+    } else {
+      _cache = JSON.parse(JSON.stringify(DEFAULT_DB));
+      await _db.collection('intranet').doc('db').set(_cache);
+    }
+    _dbReady = true;
+    window._dbReady = true;
+    console.log('Firebase loaded successfully');
+  } catch (e) {
+    console.error('Firebase load error:', e);
+    _cache = JSON.parse(JSON.stringify(DEFAULT_DB));
+    _dbReady = true;
+    window._dbReady = true;
+  }
+}
+
+async function saveToFirebase(data) {
+  try {
+    _cache = JSON.parse(JSON.stringify(data));
+    if (_db) {
+      await _db.collection('intranet').doc('db').set(_cache);
+      console.log('Data saved to Firebase');
+    }
+  } catch (e) {
+    console.error('Firebase save error:', e);
+  }
+}
+
+// ---- DB Functions ----
 function getDB() {
-  initDB();
-  return JSON.parse(localStorage.getItem(DB_KEY));
+  if (!_cache) return JSON.parse(JSON.stringify(DEFAULT_DB));
+  return JSON.parse(JSON.stringify(_cache));
 }
 
-function saveDB(db) {
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
+function saveDB(data) {
+  saveToFirebase(data);
 }
 
 function resetDB() {
-  localStorage.setItem(DB_KEY, JSON.stringify(DEFAULT_DB));
+  saveToFirebase(JSON.parse(JSON.stringify(DEFAULT_DB)));
 }
 
 // ---- USERS ----
@@ -72,7 +106,6 @@ function createUser(data) {
   db.users.push(user);
   saveDB(db);
   addLog(getCurrentSession()?.id, 'CREATE_USER', `Creó usuario: ${user.username}`);
-  // Notify all admins
   pushNotification(null, 'NEW_USER', `Nuevo usuario creado: ${user.name} (${user.department})`, 'admin');
   return user;
 }
@@ -85,9 +118,8 @@ function updateUser(id, data) {
   db.users[idx] = { ...db.users[idx], ...data };
   saveDB(db);
   addLog(getCurrentSession()?.id, 'UPDATE_USER', `Actualizó usuario: ${db.users[idx].username}`);
-  // Notify if password changed
   if (data.password && data.password !== prev.password) {
-    pushNotification(Number(id), 'PASSWORD_CHANGED', 'El administrador cambió tu contraseña. Por favor inicia sesión de nuevo.');
+    pushNotification(Number(id), 'PASSWORD_CHANGED', 'El administrador cambió tu contraseña.');
   }
   return db.users[idx];
 }
@@ -132,7 +164,6 @@ function createPanel(data) {
   db.permissions[newId] = [getCurrentSession()?.id];
   saveDB(db);
   addLog(getCurrentSession()?.id, 'CREATE_PANEL', `Creó panel: ${panel.title}`);
-  // Notify all users (new panel available)
   db.users.filter(u => u.role !== 'admin').forEach(u => {
     pushNotification(u.id, 'NEW_PANEL', `Nuevo panel disponible: "${panel.title}" en categoría ${panel.category || 'General'}.`);
   });
@@ -154,7 +185,6 @@ function deletePanel(id) {
   const p = db.panels.find(p => p.id === Number(id));
   db.panels = db.panels.filter(p => p.id !== Number(id));
   delete db.permissions[id];
-  // Remove from favorites
   for (const uid in db.favorites) {
     db.favorites[uid] = db.favorites[uid].filter(pid => pid !== Number(id));
   }
@@ -176,7 +206,6 @@ function setPanelPermissions(panelId, userIds, previousUserIds) {
   db.permissions[pid] = [...next];
   saveDB(db);
   addLog(getCurrentSession()?.id, 'UPDATE_PERM', `Actualizó permisos del panel ID: ${panelId}`);
-  // Notify users who lost access
   prev.forEach(uid => {
     if (!next.has(uid)) {
       const panel = getPanelById(pid);
@@ -209,7 +238,7 @@ function toggleFavorite(userId, panelId) {
     db.favorites[userId].splice(idx, 1);
   }
   saveDB(db);
-  return idx === -1; // true = added, false = removed
+  return idx === -1;
 }
 
 function isFavorite(userId, panelId) {
@@ -245,7 +274,6 @@ function pushNotification(userId, type, message, targetRole) {
   const db = getDB();
   const newId = Math.max(...db.notifications.map(n => n.id), 0) + 1;
   if (targetRole === 'admin') {
-    // Notify all admins
     db.users.filter(u => u.role === 'admin').forEach(u => {
       db.notifications.push({ id: newId + u.id, userId: u.id, type, message, read: false, ts: new Date().toISOString() });
     });
@@ -278,4 +306,23 @@ function getCurrentSession() {
 // ---- HELPERS ----
 function makeInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('es-CL') + ' ' + d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+}
+
+function avatarColor(id) {
+  const colors = ['#E3000F','#2563EB','#1A9B3C','#F59E0B','#8B5CF6','#EC4899','#14B8A6','#F97316'];
+  return colors[Number(id) % colors.length];
+}
+
+// ---- Init on load ----
+window._dbReady = false;
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initFirebase);
+} else {
+  initFirebase();
 }
