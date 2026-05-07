@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Permisos — Intranet Corporativa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    /* All colors use CSS variables → auto dark/light mode */
+
+    .perm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 22px;
+    }
+
+    /* Panel permission card */
+    .panel-perm-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: box-shadow 0.2s, background 0.3s, border-color 0.3s;
+    }
+    .panel-perm-card:hover { box-shadow: var(--shadow-md); }
+
+    .panel-perm-header {
+      padding: 14px 18px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-input);
+    }
+
+    .panel-perm-icon {
+      width: 46px; height: 46px; border-radius: 11px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+
+    .panel-perm-info h3 {
+      font-size: 14px; font-weight: 700; color: var(--text-primary);
+    }
+    .panel-perm-info p {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px;
+    }
+
+    .panel-perm-body { padding: 4px 0; }
+
+    /* User row */
+    .user-perm-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 18px;
+      border-bottom: 1px solid var(--border-light);
+      transition: background 0.12s;
+    }
+    .user-perm-row:last-child { border-bottom: none; }
+    .user-perm-row:hover { background: var(--table-hover); }
+
+    .user-perm-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+
+    .user-perm-name {
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .user-perm-dept {
+      font-size: 11px; color: var(--text-muted); margin-top: 1px;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative; width: 46px; height: 26px;
+      flex-shrink: 0; cursor: pointer;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--border);
+      border-radius: 26px; transition: background 0.2s;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute; width: 20px; height: 20px;
+      left: 3px; bottom: 3px;
+      background: var(--bg-card);
+      border-radius: 50%; transition: transform 0.2s;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+    .toggle-switch input:checked + .toggle-slider { background: var(--red); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    /* Card footer */
+    .perm-actions {
+      padding: 11px 18px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      background: var(--perm-footer-bg);
+    }
+    .perm-count {
+      font-size: 12px; color: var(--text-muted); font-weight: 600;
+    }
+
+    /* Info banner */
+    .info-banner {
+      background: var(--info-bg);
+      border: 1px solid var(--info-border);
+      border-radius: 10px;
+      padding: 13px 18px;
+      margin-bottom: 22px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 13px; color: var(--info-color);
+    }
+    .info-banner svg { width: 20px; height: 20px; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Permisos y Accesos</h1>
+      <div class="breadcrumb">Administración / Permisos</div>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Modo Oscuro"></button>
+      <button class="topbar-btn" onclick="openSearch(session)" title="Buscar paneles">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+      <div style="position:relative">
+        <button class="topbar-btn" onclick="openNotifPanel(session)" title="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span id="bellBadge" style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;background:var(--red);border-radius:10px;font-size:9px;font-weight:700;color:white;display:none;align-items:center;justify-content:center;padding:0 4px;pointer-events:none"></span>
+      </div>
+      <button class="btn btn-primary" onclick="saveAllPermissions()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        Guardar Permisos
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <div class="info-banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="16" x2="12" y2="12"/>
+        <line x1="12" y1="8" x2="12.01" y2="8"/>
+      </svg>
+      <span>Activa o desactiva el acceso de cada usuario a cada panel. Luego presiona <strong>Guardar Permisos</strong>.</span>
+    </div>
+
+    <div class="perm-grid" id="permGrid">
+      <div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">
+        Cargando paneles...
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../js/logo.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+  const session = requireAuth(true);
+  let permState = {};
+
+  if (session) {
+    window._activePage = 'permissions';
+    renderSidebar(session, 'permissions');
+    updateBellBadge(session.id);
+    loadAndRender();
+  }
+
+  function loadAndRender() {
+    const db = getDB();
+    const panels = db.panels || [];
+    const allUsers = db.users || [];
+    const regularUsers = allUsers.filter(u => u.role !== 'admin');
+    const permissions = db.permissions || {};
+    const grid = document.getElementById('permGrid');
+
+    if (panels.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1">
+          <div class="card">
+            <div class="empty-state" style="padding:80px 20px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:56px;height:56px;margin:0 auto 16px;opacity:.35;display:block">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <h3>Sin paneles creados</h3>
+              <p>Primero crea paneles en la sección "Paneles Power BI".</p>
+              <a href="panels.html" class="btn btn-primary" style="margin-top:20px;display:inline-flex">Ir a Paneles</a>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    if (regularUsers.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1">
+          <div class="card">
+            <div class="empty-state" style="padding:60px 20px">
+              <h3>Sin usuarios regulares</h3>
+              <p>Crea usuarios con rol "Usuario" en Gestión de Usuarios.</p>
+              <a href="users.html" class="btn btn-primary" style="margin-top:16px;display:inline-flex">Ir a Usuarios</a>
+            </div>
+          </div>
+        </div>`;
+      return;
+    }
+
+    // Init permState
+    panels.forEach(p => {
+      const pid = Number(p.id);
+      const raw = permissions[pid] || permissions[String(pid)] || [];
+      permState[pid] = new Set(raw.map(Number));
+    });
+
+    grid.innerHTML = panels.map(p => {
+      const pid = Number(p.id);
+      const iconColor = p.color || '#E3000F';
+      const icon = p.icon || '📊';
+      const userIds = regularUsers.map(u => Number(u.id));
+
+      const userRows = regularUsers.map(u => {
+        const uid = Number(u.id);
+        const isChecked = permState[pid].has(uid);
+        const bg = avatarColor(uid);
+        const initials = u.avatar || (u.name ? u.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : '?');
+        return `
+          <div class="user-perm-row">
+            <div class="user-perm-avatar" style="background:${bg}">${initials}</div>
+            <div style="flex:1;min-width:0">
+              <div class="user-perm-name">${u.name}</div>
+              <div class="user-perm-dept">${u.department || ''} &middot; @${u.username}</div>
+            </div>
+            <label class="toggle-switch" title="${isChecked ? 'Quitar acceso' : 'Dar acceso'}">
+              <input type="checkbox"
+                id="toggle-${pid}-${uid}"
+                ${isChecked ? 'checked' : ''}
+                onchange="togglePerm(${pid}, ${uid}, this.checked)"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>`;
+      }).join('');
+
+      const accessCount = permState[pid].size;
+
+      return `
+        <div class="panel-perm-card">
+          <div class="panel-perm-header">
+            <div class="panel-perm-icon" style="background:${iconColor}22">${icon}</div>
+            <div class="panel-perm-info">
+              <h3>${p.title}</h3>
+              <p>${p.category || ''}${p.description ? ' &middot; ' + p.description : ''}</p>
+            </div>
+          </div>
+          <div class="panel-perm-body">${userRows}</div>
+          <div class="perm-actions">
+            <span class="perm-count" id="count-${pid}">
+              ${accessCount} usuario${accessCount !== 1 ? 's' : ''} con acceso
+            </span>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost btn-sm" onclick='setAllForPanel(${pid}, true, ${JSON.stringify(userIds)})'>Todos</button>
+              <button class="btn btn-ghost btn-sm" onclick='setAllForPanel(${pid}, false, ${JSON.stringify(userIds)})'>Ninguno</button>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function togglePerm(panelId, userId, checked) {
+    panelId = Number(panelId); userId = Number(userId);
+    if (!permState[panelId]) permState[panelId] = new Set();
+    if (checked) permState[panelId].add(userId);
+    else permState[panelId].delete(userId);
+    refreshCount(panelId);
+  }
+
+  function refreshCount(panelId) {
+    panelId = Number(panelId);
+    const el = document.getElementById('count-' + panelId);
+    if (!el) return;
+    const n = permState[panelId] ? permState[panelId].size : 0;
+    el.textContent = n + ' usuario' + (n !== 1 ? 's' : '') + ' con acceso';
+  }
+
+  function setAllForPanel(panelId, checked, userIds) {
+    panelId = Number(panelId);
+    if (!permState[panelId]) permState[panelId] = new Set();
+    userIds.forEach(function(uid) {
+      uid = Number(uid);
+      if (checked) permState[panelId].add(uid);
+      else permState[panelId].delete(uid);
+      const cb = document.getElementById('toggle-' + panelId + '-' + uid);
+      if (cb) cb.checked = checked;
+    });
+    refreshCount(panelId);
+  }
+
+  function saveAllPermissions() {
+    const db = getDB();
+    if (!db.permissions) db.permissions = {};
+    const adminIds = (db.users || []).filter(u => u.role === 'admin').map(u => Number(u.id));
+    (db.panels || []).forEach(function(p) {
+      const pid = Number(p.id);
+      const selectedIds = permState[pid] ? [...permState[pid]].map(Number) : [];
+      db.permissions[pid] = [...new Set([...adminIds, ...selectedIds])];
+    });
+    saveDB(db);
+    const db2 = getDB();
+    db2.logs = db2.logs || [];
+    db2.logs.push({
+      id: Math.max(...db2.logs.map(l => l.id), 0) + 1,
+      userId: session.id, action: 'UPDATE_PERM',
+      detail: 'Actualizó permisos de acceso a paneles',
+      ts: new Date().toISOString()
+    });
+    saveDB(db2);
+    showToast('Permisos guardados correctamente.', 'success');
+  }
+</script>
+</body>
+</html>

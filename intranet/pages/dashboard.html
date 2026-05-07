@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard — Intranet Corporativa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+
+    #dashViewer {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      display: none;
+      flex-direction: column;
+      background: #1A0002;
+      animation: fadeIn .2s ease;
+    }
+    #dashViewer.open { display: flex; }
+
+    .viewer-topbar {
+      height: 54px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--red-dark) 0%, var(--red) 100%);
+      display: flex; align-items: center; gap: 12px; padding: 0 18px;
+      border-bottom: 3px solid var(--red);
+    }
+    .v-icon { font-size: 20px; }
+    .v-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 19px; font-weight: 700; color: white;
+      text-transform: uppercase; letter-spacing: .5px; flex: 1;
+    }
+    .v-cat {
+      font-size: 11px; font-weight: 700;
+      background: rgba(255,255,255,.12);
+      padding: 3px 10px; border-radius: 20px; color: rgba(255,255,255,.85);
+    }
+    .v-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 13px; border-radius: 7px;
+      font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.12); color: white;
+      text-decoration: none; transition: background .15s; white-space: nowrap;
+    }
+    .v-btn:hover { background: rgba(255,255,255,.25); }
+    .v-btn svg { width: 13px; height: 13px; }
+    .v-close {
+      width: 34px; height: 34px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,.12); color: white; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .v-close:hover { background: rgba(227,0,15,.5); }
+    .v-close svg { width: 16px; height: 16px; }
+
+    .viewer-body { flex: 1; position: relative; overflow: hidden; }
+
+    .viewer-state {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: #F2F4F8; z-index: 5;
+      text-align: center; padding: 40px 20px;
+    }
+    #dStateLoading .spin {
+      width: 52px; height: 52px;
+      border: 4px solid var(--gray-200); border-top-color: var(--blue);
+      border-radius: 50%; animation: spin .75s linear infinite; margin-bottom: 18px;
+    }
+
+    #dStatePopup {
+      background: linear-gradient(135deg, #2A0003 0%, #8B0007 100%);
+    }
+    #dStatePopup h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 800; color: white;
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px;
+    }
+    #dStatePopup p { color: rgba(255,255,255,.7); font-size: 14px; max-width: 440px; line-height: 1.6; }
+
+    .popup-icon-big { font-size: 72px; margin-bottom: 20px; animation: slideUp .4s ease; }
+    .popup-actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+
+    .btn-popup-open {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 28px; background: var(--red); color: white;
+      border: none; border-radius: 10px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase;
+      cursor: pointer; transition: all .18s;
+    }
+    .btn-popup-open:hover { background: var(--red-mid); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(227,0,15,.45); }
+    .btn-popup-open svg { width: 18px; height: 18px; }
+
+    .btn-popup-sec {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 22px;
+      background: rgba(255,255,255,.12); color: white;
+      border: 1px solid rgba(255,255,255,.25); border-radius: 10px;
+      font-family: 'Barlow', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background .15s;
+    }
+    .btn-popup-sec:hover { background: rgba(255,255,255,.22); }
+    .btn-popup-sec svg { width: 15px; height: 15px; }
+
+    .popup-tip {
+      margin-top: 28px; background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.15); border-radius: 10px;
+      padding: 14px 20px; max-width: 500px;
+      font-size: 12px; color: rgba(255,255,255,.6); line-height: 1.6; text-align: left;
+    }
+    .popup-tip strong { color: rgba(255,255,255,.85); }
+
+    #dashPbiIframe {
+      position: absolute; inset: 0; width: 100%; height: 100%; border: none; z-index: 1;
+    }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Dashboard</h1>
+      <div class="breadcrumb">Inicio / Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Modo Oscuro"></button>
+      <button class="topbar-btn" onclick="openSearch(session)" title="Buscar paneles">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+        </svg>
+      </button>
+      <div style="position:relative">
+        <button class="topbar-btn" onclick="openNotifPanel(session)" title="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </button>
+        <span id="bellBadge" style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;background:var(--red);border-radius:10px;font-size:9px;font-weight:700;color:white;display:none;align-items:center;justify-content:center;padding:0 4px;pointer-events:none"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="card section-gap">
+      <div class="card-header">
+        <h2>Mis Paneles Power BI</h2>
+        <span id="panelCount" class="badge badge-blue">0 paneles</span>
+      </div>
+      <div class="card-body" id="myPanelsArea">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8m-4-4v4"/>
+          </svg>
+          <h3>Sin paneles asignados</h3>
+          <p>El administrador aún no te ha asignado ningún panel.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="recentLogsCard" style="display:none">
+      <div class="card-header">
+        <h2>Actividad Reciente</h2>
+        <a href="logs.html" class="btn btn-ghost btn-sm">Ver todo</a>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Usuario</th><th>Acción</th><th>Detalle</th><th>Fecha</th></tr></thead>
+            <tbody id="logsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SMART FULL-SCREEN VIEWER ===== -->
+<div id="dashViewer">
+  <div class="viewer-topbar">
+    <span class="v-icon" id="dvIcon">📊</span>
+    <span class="v-title" id="dvTitle"></span>
+    <span class="v-cat" id="dvCat"></span>
+    <a class="v-btn" id="dvExtBtn" href="#" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      Abrir en Power BI
+    </a>
+    <button class="v-close" onclick="closeDashViewer()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M18 6 6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <div class="viewer-body">
+    <!-- Loading -->
+    <div class="viewer-state" id="dStateLoading">
+      <div class="spin"></div>
+      <p style="font-size:15px;font-weight:600;color:var(--gray-700)">Cargando reporte...</p>
+      <p style="font-size:13px;color:var(--gray-400);margin-top:6px">Verificando permisos de incrustación</p>
+    </div>
+
+    <!-- Popup mode -->
+    <div class="viewer-state" id="dStatePopup" style="display:none">
+      <div class="popup-icon-big" id="dvPopupIcon">📊</div>
+      <h2 id="dvPopupTitle"></h2>
+      <p>Este reporte requiere autenticación de tu organización. Ábrelo en una ventana nueva para verlo con tus credenciales de Microsoft.</p>
+      <div class="popup-actions">
+        <button class="btn-popup-open" id="dvPopupOpenBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+            <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Abrir Reporte
+        </button>
+        <button class="btn-popup-sec" onclick="dvTryEmbed()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>
+          </svg>
+          Intentar incrustación
+        </button>
+      </div>
+      <div class="popup-tip">
+        <strong>¿Cómo incrustar directamente aquí?</strong><br>
+        En Power BI → tu reporte → <em>Archivo → Insertar informe → Publicar en la web</em> → copia la URL generada (<code style="color:rgba(255,255,255,.7)">app.powerbi.com/view?r=...</code>) y pégala al editar el panel.
+      </div>
+    </div>
+
+    <iframe id="dashPbiIframe" src="about:blank" allowfullscreen allow="fullscreen; autoplay"></iframe>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../js/logo.js"></script>
+  <script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+  const session = requireAuth();
+  window._activePage = 'dashboard';
+  if (session) {
+    renderSidebar(session, 'dashboard');
+    updateBellBadge(session.id);
+    initDashboard(session);
+  }
+
+  let dvCurrentPanel = null;
+  let dvTimeout = null;
+
+  function initDashboard(session) {
+    const panels = getUserPanels(session.id);
+    const users = getUsers();
+    const logs = getLogs();
+
+    // Stats
+    const statGrid = document.getElementById('statGrid');
+    if (session.role === 'admin') {
+      statGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="label">Usuarios Activos</div>
+            <div class="value">${users.filter(u=>u.active).length}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="label">Paneles Totales</div>
+            <div class="value">${getPanels().length}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="label">Actividades Hoy</div>
+            <div class="value">${logs.filter(l=>l.ts&&l.ts.startsWith(new Date().toISOString().split('T')[0])).length}</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <div class="label">Total Eventos</div>
+            <div class="value">${logs.length}</div>
+          </div>
+        </div>`;
+    } else {
+      statGrid.innerHTML = `
+        <div class="stat-card">
+          <div class="stat-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/>
+            </svg>
+          </div>
+          <div class="stat-info"><div class="label">Mis Paneles</div><div class="value">${panels.length}</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="stat-info"><div class="label">Mi Área</div><div class="value" style="font-size:16px;padding-top:4px">${session.department}</div></div>
+        </div>`;
+    }
+
+    // My panels
+    renderMyPanels();
+
+    // Logs (admin)
+    if (session.role === 'admin') {
+      document.getElementById('recentLogsCard').style.display = '';
+      const tbody = document.getElementById('logsBody');
+      tbody.innerHTML = logs.slice(0,10).map(l => {
+        const u = getUserById(l.userId);
+        return `<tr>
+          <td><strong>${u?u.name:'Sistema'}</strong></td>
+          <td><span class="log-action">${l.action}</span></td>
+          <td>${l.detail}</td>
+          <td style="color:var(--gray-400);font-size:12px">${formatDate(l.ts)}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  function isPublicUrl(url) {
+    if (!url) return false;
+    return url.includes('/view?r=') || url.includes('autoAuth=false') || url.includes('embed=true&action=view');
+  }
+
+  function panelCardHTML(p) {
+    const isPublic = isPublicUrl(p.embedUrl);
+    const fav = isFavorite(session.id, p.id);
+    const badge = isPublic
+      ? `<span style="font-size:10px;background:var(--badge-green-bg);color:var(--badge-green-txt);padding:2px 7px;border-radius:10px;font-weight:700">EMBED PÚBLICO</span>`
+      : `<span style="font-size:10px;background:var(--badge-blue-bg);color:var(--badge-blue-txt);padding:2px 7px;border-radius:10px;font-weight:700">ACCESO ORG</span>`;
+    
+    // Mostrar imagen si existe, sino emoji
+    const iconDisplay = p.iconUrl
+      ? `<img src="${p.iconUrl}" style="max-width:75%;max-height:80%;object-fit:contain;border-radius:6px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.18))"/>`
+      : `<span>${p.icon}</span>`;
+
+    return `<div class="panel-card" style="cursor:pointer">
+      <div class="panel-card-top" style="background:${p.color}22;position:relative;overflow:hidden" onclick="openDashViewer(${p.id})">
+        ${iconDisplay}
+        <button onclick="event.stopPropagation();toggleFavBtn(${p.id},this)" title="${fav?'Quitar de favoritos':'Agregar a favoritos'}"
+          style="position:absolute;top:8px;right:8px;background:${fav?'rgba(227,0,15,0.12)':'rgba(0,0,0,0.06)'};border:none;cursor:pointer;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s">
+          ${fav ? '⭐' : '☆'}
+        </button>
+      </div>
+      <div class="panel-card-body" onclick="openDashViewer(${p.id})">
+        <h3>${p.title}</h3>
+        <p>${p.description}</p>
+      </div>
+      <div class="panel-card-footer" onclick="openDashViewer(${p.id})">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span class="badge badge-blue">${p.category}</span>
+          ${badge}
+        </div>
+        <span style="font-size:11px;color:var(--text-muted)">${p.createdAt||''}</span>
+      </div>
+    </div>`;
+  }
+
+  function toggleFavBtn(panelId, btn) {
+    const added = toggleFavorite(session.id, panelId);
+    btn.textContent = added ? '⭐' : '☆';
+    btn.style.background = added ? 'rgba(227,0,15,0.12)' : 'rgba(0,0,0,0.06)';
+    btn.title = added ? 'Quitar de favoritos' : 'Agregar a favoritos';
+    showToast(added ? 'Agregado a favoritos.' : 'Quitado de favoritos.', 'info');
+    // Re-render panels to show favorites first
+    renderMyPanels();
+  }
+
+  function renderMyPanels() {
+    const panels = getUserPanels(session.id);
+    const favIds = new Set(getFavorites(session.id));
+    const sorted = [...panels].sort((a,b) => {
+      const fa = favIds.has(a.id), fb = favIds.has(b.id);
+      return fa === fb ? 0 : fa ? -1 : 1;
+    });
+    const area = document.getElementById('myPanelsArea');
+    document.getElementById('panelCount').textContent = `${panels.length} panel${panels.length!==1?'es':''}`;
+    if (sorted.length > 0) {
+      area.innerHTML = `<div class="panels-grid">${sorted.map(p => panelCardHTML(p)).join('')}</div>`;
+    }
+  }
+
+  function openDashViewer(id) {
+    const p = getPanelById(id);
+    if (!p) return;
+    dvCurrentPanel = p;
+
+    document.getElementById('dvIcon').textContent = p.icon || '📊';
+    document.getElementById('dvTitle').textContent = p.title;
+    document.getElementById('dvCat').textContent = p.category || '';
+    document.getElementById('dvExtBtn').href = p.embedUrl;
+    document.getElementById('dvPopupIcon').textContent = p.icon || '📊';
+    document.getElementById('dvPopupTitle').textContent = p.title;
+    document.getElementById('dvPopupOpenBtn').onclick = () => {
+      const w = window.screen.width, h = window.screen.height;
+      window.open(p.embedUrl, 'pbiWin', `width=${w},height=${h},left=0,top=0`);
+    };
+
+    document.getElementById('dashViewer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    addLog(session.id, 'VIEW_PANEL', `Visualizó panel: ${p.title}`);
+
+    if (isPublicUrl(p.embedUrl)) {
+      dvShowState('loading');
+      dvStartLoad(p.embedUrl);
+    } else {
+      dvShowState('popup');
+    }
+  }
+
+  function dvShowState(state) {
+    document.getElementById('dStateLoading').style.display = state === 'loading' ? 'flex' : 'none';
+    document.getElementById('dStatePopup').style.display  = state === 'popup'   ? 'flex' : 'none';
+  }
+
+  function dvStartLoad(url) {
+    clearTimeout(dvTimeout);
+    const iframe = document.getElementById('dashPbiIframe');
+    iframe.src = 'about:blank';
+
+    dvTimeout = setTimeout(() => { dvShowState('popup'); }, 12000);
+
+    iframe.onload = function() {
+      clearTimeout(dvTimeout);
+      try {
+        const loc = iframe.contentWindow.location.href;
+        if (!loc || loc === 'about:blank') { dvShowState('popup'); return; }
+        dvShowState('embed');
+      } catch(e) { dvShowState('embed'); }
+    };
+    iframe.onerror = function() { clearTimeout(dvTimeout); dvShowState('popup'); };
+
+    setTimeout(() => { iframe.src = url; }, 100);
+  }
+
+  function dvTryEmbed() {
+    if (!dvCurrentPanel) return;
+    dvShowState('loading');
+    dvStartLoad(dvCurrentPanel.embedUrl);
+  }
+
+  function closeDashViewer() {
+    clearTimeout(dvTimeout);
+    document.getElementById('dashPbiIframe').src = 'about:blank';
+    document.getElementById('dashViewer').classList.remove('open');
+    document.body.style.overflow = '';
+    dvCurrentPanel = null;
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDashViewer(); });
+</script>
+</body>
+</html>
