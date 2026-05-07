@@ -1,7 +1,7 @@
 [build]
   base = "intranet"
   command = ""
-  publish = "intranet"
+  publish = "."
 
 [[redirects]]
   from = "/*"
