@@ -4,7 +4,7 @@
 // ============================================================
 
 // 🔧 CAMBIA ESTA URL por la de tu proyecto en Railway
-const API_URL = 'https://TU-PROYECTO.railway.app/api';
+const API_URL = 'https://intranet-cp-production-b61c.up.railway.app/api';
 
 // ============================================================
 // HTTP HELPERS
