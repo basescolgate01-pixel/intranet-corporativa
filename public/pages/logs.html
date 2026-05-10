@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro de Actividad — Intranet Corporativa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    /* Filters bar — all themed */
+    .filters-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      margin-bottom: 20px;
+      display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    .filters-bar select,
+    .filters-bar input {
+      padding: 8px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: 'Barlow', sans-serif;
+      font-size: 13px;
+      color: var(--text-primary);
+      background: var(--bg-input);
+      outline: none;
+      transition: border-color 0.2s, background 0.3s, color 0.3s;
+      min-width: 160px;
+    }
+
+    .filters-bar select:focus,
+    .filters-bar input:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 2px rgba(227,0,15,0.1);
+    }
+
+    /* Dropdown option styling for dark mode */
+    .filters-bar select option {
+      background: var(--bg-input);
+      color: var(--text-primary);
+    }
+
+    .log-count {
+      margin-left: auto;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* Log action badges — specific per action */
+    .log-action { font-family: 'Barlow Condensed', monospace; }
+
+    .log-LOGIN       { background: rgba(227,0,15,0.12);   color: var(--icon-red-txt); }
+    .log-LOGOUT      { background: var(--log-action-bg);  color: var(--text-muted); }
+    .log-CREATE_USER { background: rgba(26,155,60,0.14);  color: var(--icon-green-txt); }
+    .log-UPDATE_USER { background: rgba(245,158,11,0.14); color: var(--icon-orange-txt); }
+    .log-DELETE_USER { background: rgba(227,0,15,0.16);   color: var(--badge-red-txt); }
+    .log-CREATE_PANEL{ background: rgba(26,155,60,0.14);  color: var(--icon-green-txt); }
+    .log-UPDATE_PANEL{ background: rgba(245,158,11,0.14); color: var(--icon-orange-txt); }
+    .log-DELETE_PANEL{ background: rgba(227,0,15,0.16);   color: var(--badge-red-txt); }
+    .log-UPDATE_PERM { background: rgba(139,92,246,0.14); color: #A78BFA; }
+    .log-VIEW_PANEL  { background: rgba(59,130,246,0.14); color: var(--badge-blue-txt); }
+
+    /* User avatar in table */
+    .log-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+
+    /* Empty logs */
+    #emptyLogs { display: none; }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Registro de Actividad</h1>
+      <div class="breadcrumb">Administración / Logs</div>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Modo Oscuro"></button>
+      <button class="topbar-btn" onclick="openSearch(session)" title="Buscar paneles">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+      <div style="position:relative">
+        <button class="topbar-btn" onclick="openNotifPanel(session)" title="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span id="bellBadge" style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;background:var(--red);border-radius:10px;font-size:9px;font-weight:700;color:white;display:none;align-items:center;justify-content:center;padding:0 4px;pointer-events:none"></span>
+      </div>
+      <button class="btn btn-ghost" onclick="renderLogs()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+          <polyline points="23 4 23 10 17 10"/>
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+        Actualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <select id="filterUser" onchange="renderLogs()">
+        <option value="">Todos los usuarios</option>
+      </select>
+      <select id="filterAction" onchange="renderLogs()">
+        <option value="">Todas las acciones</option>
+        <option value="LOGIN">LOGIN</option>
+        <option value="LOGOUT">LOGOUT</option>
+        <option value="CREATE_USER">CREATE_USER</option>
+        <option value="UPDATE_USER">UPDATE_USER</option>
+        <option value="DELETE_USER">DELETE_USER</option>
+        <option value="CREATE_PANEL">CREATE_PANEL</option>
+        <option value="UPDATE_PANEL">UPDATE_PANEL</option>
+        <option value="DELETE_PANEL">DELETE_PANEL</option>
+        <option value="UPDATE_PERM">UPDATE_PERM</option>
+        <option value="VIEW_PANEL">VIEW_PANEL</option>
+      </select>
+      <input type="text" id="filterSearch" placeholder="Buscar en detalle..." oninput="renderLogs()" style="min-width:200px"/>
+      <span class="log-count" id="logCount">0 eventos</span>
+    </div>
+
+    <!-- Table card -->
+    <div class="card">
+      <div class="card-body" style="padding:0">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:52px">#</th>
+                <th>Fecha / Hora</th>
+                <th>Usuario</th>
+                <th>Acción</th>
+                <th>Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody"></tbody>
+          </table>
+        </div>
+
+        <div id="emptyLogs">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <h3>Sin registros</h3>
+            <p>No hay eventos que coincidan con los filtros.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../js/logo.js"></script>
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+  const session = requireAuth(true);
+  if (session) {
+    window._activePage = 'logs';
+    renderSidebar(session, 'logs');
+    updateBellBadge(session.id);
+    initLogs();
+  }
+
+  async function initLogs() {
+    const users = await getUsers();
+    const sel = document.getElementById('filterUser');
+    users.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.id;
+      opt.textContent = u.name;
+      sel.appendChild(opt);
+    });
+    renderLogs();
+  }
+
+  async function renderLogs() {
+    const filterUser = parseInt(document.getElementById('filterUser').value) || null;
+    const filterAction = document.getElementById('filterAction').value;
+    const search = document.getElementById('filterSearch').value.toLowerCase();
+
+    let logs = await getLogs();
+    if (filterUser)   logs = logs.filter(l => l.userId === filterUser);
+    if (filterAction) logs = logs.filter(l => l.action === filterAction);
+    if (search)       logs = logs.filter(l => l.detail.toLowerCase().includes(search));
+
+    document.getElementById('logCount').textContent = `${logs.length} evento${logs.length !== 1 ? 's' : ''}`;
+
+    const tbody = document.getElementById('logsTableBody');
+    const empty = document.getElementById('emptyLogs');
+
+    if (!logs.length) {
+      tbody.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+
+    // Resolve users for all logs
+    const allUsers = await getUsers();
+    const usersMap = {};
+    allUsers.forEach(u => usersMap[u.id] = u);
+
+    tbody.innerHTML = logs.map((l, i) => {
+      const u = l.userId ? usersMap[l.userId] : null;
+      const bg = u ? avatarColor(u.id) : '#9BA8BC';
+      const initials = u ? (u.avatar || makeInitials(u.name)) : '?';
+      return `<tr>
+        <td style="color:var(--text-muted);font-size:12px;font-weight:600">${logs.length - i}</td>
+        <td style="color:var(--text-muted);font-size:12px;white-space:nowrap">${formatDate(l.ts)}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div class="log-avatar" style="background:${bg}">${initials}</div>
+            <span style="font-size:13px;font-weight:600;color:var(--text-primary)">${u ? u.name : 'Sistema'}</span>
+          </div>
+        </td>
+        <td>
+          <span class="log-action badge log-${l.action}">${l.action}</span>
+        </td>
+        <td style="font-size:13px;color:var(--text-secondary)">${l.detail}</td>
+      </tr>`;
+    }).join('');
+  }
+</script>
+</body>
+</html>

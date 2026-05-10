@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { initDB } = require('./db');
 const routes = require('./routes');
 
@@ -11,19 +12,26 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
-// Health check
-app.get('/', (req, res) => {
-  res.json({ status: 'ok', message: 'Intranet API running' });
-});
+// Serve static frontend files
+app.use(express.static(path.join(__dirname, '../public')));
 
-// Routes
+// API Routes
 app.use('/api', routes);
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+  }
+});
 
 // Start
 initDB()
   .then(() => {
     app.listen(PORT, () => {
       console.log(`✓ Server running on port ${PORT}`);
+      console.log(`✓ Frontend: http://localhost:${PORT}`);
+      console.log(`✓ API: http://localhost:${PORT}/api`);
     });
   })
   .catch(err => {

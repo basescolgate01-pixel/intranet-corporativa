@@ -1,7 +1,7 @@
 {
-  "name": "intranet-backend",
-  "version": "1.0.0",
-  "description": "Backend API para Intranet Corporativa",
+  "name": "intranet-corporativa",
+  "version": "3.0.0",
+  "description": "Intranet Corporativa - Full Stack",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",

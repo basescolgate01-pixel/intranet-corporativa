@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Colgate — Portal Intranet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #E3000F;
+      --red-dark: #B8000C;
+      --white: #FFFFFF;
+    }
+
+    body {
+      font-family: 'Barlow', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* ── Left panel: Colgate red brand side ── */
+    .brand-side {
+      width: 52%;
+      background: var(--red);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 60px 40px;
+    }
+
+    /* Animated circles background */
+    .circle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+      animation: float 8s ease-in-out infinite;
+    }
+    .circle-1 { width: 500px; height: 500px; top: -180px; right: -160px; animation-delay: 0s; }
+    .circle-2 { width: 300px; height: 300px; bottom: -80px; left: -100px; animation-delay: 2s; }
+    .circle-3 { width: 180px; height: 180px; top: 55%; left: 10%; animation-delay: 4s; }
+    .circle-4 { width: 100px; height: 100px; top: 15%; right: 20%; animation-delay: 1s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50%       { transform: translateY(-20px) scale(1.03); }
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .brand-logo-wrap {
+      animation: logoIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes logoIn {
+      from { opacity: 0; transform: scale(0.7) translateY(30px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .brand-tagline {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      line-height: 1.2;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .brand-sub {
+      font-size: 15px;
+      color: rgba(255,255,255,0.7);
+      margin-top: 12px;
+      font-weight: 400;
+      animation: fadeUp 0.6s 0.45s ease both;
+    }
+
+    .brand-divider {
+      width: 48px; height: 3px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 3px;
+      margin: 24px auto;
+      animation: fadeUp 0.6s 0.5s ease both;
+    }
+
+    .brand-stats {
+      display: flex;
+      gap: 40px;
+      justify-content: center;
+      animation: fadeUp 0.6s 0.6s ease both;
+    }
+
+    .brand-stat { text-align: center; }
+    .brand-stat .num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 800;
+      color: white; display: block;
+    }
+    .brand-stat .lbl {
+      font-size: 11px; color: rgba(255,255,255,0.6);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      font-weight: 600;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Right panel: login form ── */
+    .form-side {
+      width: 48%;
+      background: #FAFAFA;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 48px;
+      animation: slideInRight 0.5s ease both;
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .form-box {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .form-greeting {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 34px;
+      font-weight: 800;
+      color: #111;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+    }
+
+    .form-greeting span { color: var(--red); }
+
+    .form-desc {
+      font-size: 14px;
+      color: #888;
+      margin-top: 8px;
+      margin-bottom: 36px;
+      font-weight: 400;
+    }
+
+    .field-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #555;
+      display: block;
+      margin-bottom: 7px;
+    }
+
+    .field-wrap {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .field-icon {
+      position: absolute;
+      left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: #BBB;
+      pointer-events: none;
+      display: flex;
+    }
+    .field-icon svg { width: 17px; height: 17px; }
+
+    .field-input {
+      width: 100%;
+      padding: 13px 14px 13px 44px;
+      border: 1.5px solid #E5E5E5;
+      border-radius: 10px;
+      font-family: 'Barlow', sans-serif;
+      font-size: 14px;
+      color: #111;
+      background: white;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .field-input:focus {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(227,0,15,0.08);
+    }
+
+    .field-input::placeholder { color: #CCC; }
+
+    /* Animated underline on focus */
+    .field-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 14px; right: 14px;
+      height: 2px;
+      background: var(--red);
+      border-radius: 2px;
+      transform: scaleX(0);
+      transition: transform 0.25s ease;
+      pointer-events: none;
+    }
+    .field-input:focus ~ .field-line { transform: scaleX(1); }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: var(--red);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s, transform 0.1s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-login::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background 0.15s;
+    }
+
+    .btn-login:hover { background: var(--red-dark); transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+    .btn-login:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+    /* Shimmer on hover */
+    .btn-login:not(:disabled):hover::after {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .error-box {
+      background: #FFF0F0;
+      border: 1.5px solid #FFBDBD;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #C4000C;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+    .error-box.show { display: flex; }
+    .error-box svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .form-footer {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 12px;
+      color: #BBB;
+    }
+
+    .form-footer strong { color: var(--red); font-weight: 700; }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+      body { flex-direction: column; overflow: auto; }
+      .brand-side { width: 100%; padding: 40px 24px; min-height: 220px; }
+      .brand-logo { width: 160px; margin-bottom: 20px; }
+      .brand-tagline { font-size: 22px; }
+      .brand-stats { gap: 24px; }
+      .form-side { width: 100%; padding: 40px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Brand side -->
+<div class="brand-side">
+  <div class="circle circle-1"></div>
+  <div class="circle circle-2"></div>
+  <div class="circle circle-3"></div>
+  <div class="circle circle-4"></div>
+  <div class="brand-content">
+    <div style="background:white;border-radius:16px;padding:12px 20px;display:inline-block;margin:0 auto 32px;box-shadow:0 4px 20px rgba(0,0,0,0.15)" class="brand-logo-wrap">
+      <img src="/colgate-logo.png" alt="Colgate" style="height:52px;display:block;object-fit:contain;max-width:180px"/>
+    </div>
+    <div class="brand-tagline">Portal Intranet</div>
+    <div class="brand-sub">Plataforma corporativa de reportes y gestión</div>
+    <div class="brand-divider"></div>
+    <div class="brand-stats">
+      <div class="brand-stat">
+        <span class="num">Power BI</span>
+        <span class="lbl">Reportes</span>
+      </div>
+      <div class="brand-stat">
+        <span class="num">360°</span>
+        <span class="lbl">Visibilidad</span>
+      </div>
+      <div class="brand-stat">
+        <span class="num">Real-time</span>
+        <span class="lbl">Datos</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Form side -->
+<div class="form-side">
+  <div class="form-box">
+    <div class="form-greeting">Bienvenido<br>de <span>vuelta</span></div>
+    <div class="form-desc">Ingresa tus credenciales para acceder al portal</div>
+
+    <div class="error-box" id="errorBox">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span id="errorText">Usuario o contraseña incorrectos.</span>
+    </div>
+
+    <div>
+      <label class="field-label">Usuario</label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+        <input class="field-input" type="text" id="loginUsername"
+          placeholder="Tu usuario" autocomplete="username" autofocus/>
+      </div>
+
+      <label class="field-label">Contraseña</label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </span>
+        <input class="field-input" type="password" id="loginPassword"
+          placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()"/>
+      </div>
+
+      <button class="btn-login" id="loginBtn" onclick="doLogin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Ingresar
+      </button>
+    </div>
+
+    <div class="form-footer">
+      © 2025 Colgate-Palmolive · <strong>Acceso restringido</strong>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  (function() {
+    const s = getSession();
+    if (s) window.location.href = 'pages/panels.html';
+  })();
+
+  async function doLogin() {
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errBox   = document.getElementById('errorBox');
+    const errText  = document.getElementById('errorText');
+    const btn      = document.getElementById('loginBtn');
+
+    errBox.classList.remove('show');
+
+    if (!username || !password) {
+      errText.textContent = 'Por favor ingresa tu usuario y contraseña.';
+      errBox.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Verificando...';
+
+    const user = await validateLogin(username, password);
+
+    if (!user) {
+      errText.textContent = 'Usuario o contraseña incorrectos.';
+      errBox.classList.add('show');
+      btn.disabled = false;
+      btn.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:18px;height:18px">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+          <polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+        </svg>
+        Ingresar`;
+      return;
+    }
+
+    saveSession(user);
+    btn.innerHTML = '<div class="spinner"></div> Entrando...';
+    window.location.href = 'pages/panels.html';
+  }
+</script>
+</body>
+</html>
