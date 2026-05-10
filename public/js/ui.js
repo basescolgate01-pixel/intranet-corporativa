@@ -175,6 +175,49 @@ async function openNotifPanel(session) {
 }
 function closeNotifPanel(){ var p=document.getElementById('notifPanel'); if(p) p.classList.remove('open'); }
 
+
+/* ══════════════════════════════════════════════════
+   MOBILE MENU
+   ══════════════════════════════════════════════════ */
+function toggleMobileMenu() {
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if (!sidebar || !overlay) return;
+  
+  var isOpen = sidebar.classList.contains('open');
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  } else {
+    sidebar.classList.add('open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeMobileMenu() {
+  var sidebar = document.getElementById('sidebar');
+  var overlay = document.getElementById('sidebarOverlay');
+  if (sidebar) sidebar.classList.remove('open');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Close menu when clicking a link
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.sidebar a').forEach(function(link) {
+    link.addEventListener('click', closeMobileMenu);
+  });
+  
+  // Close on overlay click
+  var overlay = document.getElementById('sidebarOverlay');
+  if (overlay) {
+    overlay.addEventListener('click', closeMobileMenu);
+  }
+});
+
+
 window.toggleTheme=toggleTheme; window.renderSidebar=renderSidebar; window.updateBellBadge=updateBellBadge;
 window.showToast=showToast; window.openModal=openModal; window.closeModal=closeModal;
 window.openSearch=openSearch; window.closeSearch=closeSearch;
