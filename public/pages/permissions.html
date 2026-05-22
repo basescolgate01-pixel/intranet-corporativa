@@ -370,7 +370,7 @@
     refreshInterval = setInterval(() => {
       checkForNewPanels();
     }, 10000);
-  }
+  })();
 
   async function checkForNewPanels() {
     const newPanels = await getPanels();
