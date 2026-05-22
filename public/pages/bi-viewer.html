@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Panel BI — Intranet Corporativa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    .bi-container {
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .bi-header {
+      background: linear-gradient(135deg, #E3000F 0%, #B8000C 100%);
+      color: white;
+      padding: 16px 24px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(227, 0, 15, 0.15);
+    }
+
+    .bi-header-content {
+      max-width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .bi-header-icon {
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+
+    .bi-header-text h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 0;
+      font-family: 'Barlow Condensed', sans-serif;
+      letter-spacing: 0.5px;
+    }
+
+    .bi-header-text p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+      margin: 4px 0 0;
+      font-weight: 400;
+    }
+
+    .bi-container .topbar {
+      flex-shrink: 0;
+      height: 60px;
+    }
+
+    .bi-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background: white;
+      width: 100%;
+    }
+
+    .bi-iframe-wrap {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bi-iframe-wrap iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      margin: 0;
+      padding: 0;
+    }
+
+    .bi-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      flex-direction: column;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    .bi-loading.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid #E3E3E3;
+      border-top-color: #E3000F;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .bi-loading-text {
+      font-size: 14px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .bi-error {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: white;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .bi-error.show {
+      display: flex;
+    }
+
+    .bi-error-icon {
+      font-size: 48px;
+    }
+
+    .bi-error h3 {
+      font-size: 18px;
+      color: #111;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .bi-error p {
+      font-size: 14px;
+      color: #666;
+      margin: 8px 0 0;
+      max-width: 400px;
+    }
+
+    .bi-error-code {
+      font-family: monospace;
+      font-size: 12px;
+      color: #999;
+      background: #f5f5f5;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-top: 12px;
+      word-break: break-all;
+    }
+
+    .bi-toolbar {
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .bi-toolbar-button {
+      background: #f5f5f5;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: background 0.15s;
+      color: #333;
+    }
+
+    .bi-toolbar-button:hover {
+      background: #e0e0e0;
+    }
+
+    @media (max-width: 768px) {
+      .bi-header {
+        padding: 16px;
+      }
+
+      .bi-header-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .bi-header h1 {
+        font-size: 22px;
+      }
+
+      .bi-toolbar {
+        flex-wrap: wrap;
+        padding: 12px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar"></div>
+
+<div class="main">
+  <div class="bi-container">
+    <div class="bi-header">
+      <div class="bi-header-content">
+        <div class="bi-header-icon" id="headerIcon">📊</div>
+        <div class="bi-header-text">
+          <h1 id="headerTitle">Panel de Análisis</h1>
+          <p id="headerSubtitle">Panel embebido de Power BI</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;flex:1">
+        <button onclick="toggleMobileMenu()" class="topbar-sidebar-toggle" title="Mostrar/Ocultar menú">☰</button>
+        <span style="font-size:16px;font-weight:700" id="topbarTitle">Panel BI</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Modo Oscuro"></button>
+        <button onclick="openSearch(window._session)" class="topbar-search-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+        <div style="width:1px;height:24px;background:var(--border)"></div>
+        <button onclick="openNotifPanel(window._session)" class="topbar-notif-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="topbar-notif-badge" id="bellBadge"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bi-body">
+      <div class="bi-loading" id="biLoading">
+        <div class="spinner"></div>
+        <div class="bi-loading-text">Cargando panel...</div>
+      </div>
+
+      <div class="bi-error" id="biError">
+        <div class="bi-error-icon">⚠️</div>
+        <h3>Error al cargar el panel</h3>
+        <p id="errorMessage">No se pudo cargar el panel de BI</p>
+        <div class="bi-error-code" id="errorCode"></div>
+      </div>
+
+      <div class="bi-iframe-wrap" id="iframeWrap">
+        <iframe id="biFrame" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox" style="width:100%;height:100%;"></iframe>
+      </div>
+    </div>
+
+    <div class="bi-toolbar">
+      <span id="toolbarInfo">Panel de Power BI</span>
+      <div style="flex:1"></div>
+      <button class="bi-toolbar-button" onclick="refreshPanel()">🔄 Actualizar</button>
+      <button class="bi-toolbar-button" onclick="openFullscreen()">⛶ Pantalla completa</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:10px"></div>
+<div id="sidebarOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;display:none;cursor:pointer" onclick="closeMobileMenu()"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+
+<script>
+  let _session = null;
+  let _panelUrl = '';
+  let _panelTitle = '';
+  let _panelIcon = '📊';
+
+  (async function() {
+    const session = getSession();
+    if (!session) {
+      window.location.href = '../index.html';
+      return;
+    }
+
+    _session = session;
+    window._session = session;
+
+    // Obtener parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    _panelTitle = params.get('title') || 'Panel BI';
+    _panelUrl = params.get('url') || '';
+    _panelIcon = params.get('icon') || '📊';
+
+    // Actualizar títulos
+    document.getElementById('headerTitle').textContent = _panelTitle;
+    document.getElementById('headerIcon').textContent = _panelIcon;
+    document.getElementById('topbarTitle').textContent = _panelTitle;
+    document.querySelector('title').textContent = _panelTitle + ' — Intranet Corporativa';
+
+    // Renderizar sidebar
+    await renderSidebar(session, window.location.pathname);
+    updateBellBadge(session.id);
+
+    // Cargar el iframe
+    loadPanel();
+  })();
+
+  function loadPanel() {
+    const frame = document.getElementById('biFrame');
+    const loading = document.getElementById('biLoading');
+    const error = document.getElementById('biError');
+
+    if (!_panelUrl) {
+      showError('No se proporcionó URL de panel');
+      loading.classList.add('hidden');
+      error.classList.add('show');
+      return;
+    }
+
+    loading.classList.remove('hidden');
+    error.classList.remove('show');
+
+    try {
+      frame.src = _panelUrl;
+      
+      // Esperar a que cargue el iframe
+      setTimeout(() => {
+        loading.classList.add('hidden');
+      }, 2000);
+
+      frame.onload = () => {
+        loading.classList.add('hidden');
+      };
+
+      frame.onerror = () => {
+        showError('Error al cargar el panel desde Power BI');
+        loading.classList.add('hidden');
+        error.classList.add('show');
+      };
+    } catch (e) {
+      showError(e.message);
+      loading.classList.add('hidden');
+      error.classList.add('show');
+    }
+  }
+
+  function showError(message) {
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorCode').textContent = _panelUrl || 'Sin URL';
+  }
+
+  function refreshPanel() {
+    const frame = document.getElementById('biFrame');
+    frame.src = _panelUrl;
+    showToast('Panel actualizado', 'info');
+  }
+
+  function openFullscreen() {
+    const iframe = document.getElementById('biFrame');
+    if (iframe.requestFullscreen) {
+      iframe.requestFullscreen();
+    } else if (iframe.webkitRequestFullscreen) {
+      iframe.webkitRequestFullscreen();
+    } else if (iframe.msRequestFullscreen) {
+      iframe.msRequestFullscreen();
+    }
+  }
+
+  window.toggleMobileMenu = toggleMobileMenu;
+  window.closeMobileMenu = closeMobileMenu;
+  window.openSearch = openSearch;
+  window.closeSearch = closeSearch;
+  window.openNotifPanel = openNotifPanel;
+  window.closeNotifPanel = closeNotifPanel;
+  window.showToast = showToast;
+  window.updateBellBadge = updateBellBadge;
+  window.refreshPanel = refreshPanel;
+  window.openFullscreen = openFullscreen;
+</script>
+</body>
+</html>

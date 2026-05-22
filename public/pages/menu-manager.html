@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestor de Menús — Intranet Corporativa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <style>
+    body {
+      background: linear-gradient(135deg, #F5F7FA 0%, #EEF2F7 100%);
+      min-height: 100vh;
+    }
+
+    .main {
+      background: linear-gradient(135deg, #F5F7FA 0%, #EEF2F7 100%);
+    }
+
+    .menu-container {
+      max-width: 100%;
+      margin: 20px;
+      padding: 36px 32px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #F8F9FB 100%);
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    .breadcrumb-nav {
+      margin-bottom: 24px;
+    }
+
+    .breadcrumb-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #E3000F;
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      transition: all 0.15s;
+      background: rgba(227, 0, 15, 0.06);
+    }
+
+    .breadcrumb-link:hover {
+      background: rgba(227, 0, 15, 0.12);
+      transform: translateX(-2px);
+    }
+
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+      gap: 20px;
+    }
+
+    .menu-header > div:first-child h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: #111;
+      margin: 0;
+      letter-spacing: 0.2px;
+    }
+
+    .menu-header > div:first-child p {
+      font-size: 13px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .btn-create-menu {
+      background: #E3000F;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      box-shadow: 0 2px 6px rgba(227,0,15,0.15);
+      white-space: nowrap;
+    }
+
+    .btn-create-menu:hover {
+      background: #B8000C;
+      box-shadow: 0 4px 10px rgba(227,0,15,0.2);
+      transform: translateY(-1px);
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 28px;
+      border-bottom: 1px solid #EFEFEF;
+    }
+
+    .tab {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      color: #999;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      margin-bottom: -1px;
+      letter-spacing: 0.2px;
+      text-transform: capitalize;
+    }
+
+    .tab:hover {
+      color: #333;
+    }
+
+    .tab.active {
+      color: #E3000F;
+      border-bottom-color: #E3000F;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .menu-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .menu-item-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px;
+      background: white;
+      border: 1px solid #EFEFEF;
+      border-left: 3px solid #E3000F;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    .menu-item-row:hover {
+      border-color: #E3000F;
+      border-left-color: #B8000C;
+      box-shadow: 0 4px 12px rgba(227,0,15,0.12);
+      background: #FAFAFA;
+    }
+
+    .menu-item-info {
+      flex: 1;
+    }
+
+    .menu-item-label {
+      font-weight: 700;
+      font-size: 14px;
+      color: #111;
+      margin-bottom: 2px;
+    }
+
+    .menu-item-path {
+      font-size: 10px;
+      color: #999;
+      word-break: break-all;
+      display: none;
+    }
+
+    .menu-item-badge {
+      font-size: 8px;
+      padding: 3px 9px;
+      border-radius: 14px;
+      background: #FFE5E5;
+      color: #E3000F;
+      font-weight: 700;
+      display: inline-block;
+      letter-spacing: 0.2px;
+    }
+
+    .menu-item-badge.normal {
+      background: #E8F5E9;
+      color: #1A9B3C;
+    }
+
+    .menu-item-status {
+      font-size: 9px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      background: #E8F5E9;
+      color: #1A9B3C;
+      font-weight: 700;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .menu-item-status.inactive {
+      background: #F0F0F0;
+      color: #888;
+    }
+
+    .menu-item-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      margin-top: auto;
+      padding-top: 6px;
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      font-size: 14px;
+      color: #E3000F;
+      flex-shrink: 0;
+    }
+
+    .btn-icon:hover {
+      background: #FFE5E5;
+      color: #B8000C;
+    }
+
+    .btn-icon.danger {
+      color: #E3000F;
+    }
+
+    .btn-icon.danger:hover {
+      background: #FFE5E5;
+      color: #B8000C;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 70px rgba(0,0,0,0.25);
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 24px;
+      color: #111;
+      letter-spacing: 0.2px;
+    }
+
+    .modal-field {
+      margin-bottom: 18px;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: #666;
+      letter-spacing: 0.3px;
+    }
+
+    .modal-field input,
+    .modal-field select {
+      width: 100%;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: Barlow, sans-serif;
+      font-size: 14px;
+      transition: all 0.15s;
+      background: var(--bg-card);
+    }
+
+    .modal-field input:hover,
+    .modal-field select:hover {
+      border-color: #ddd;
+    }
+
+    .modal-field input:focus,
+    .modal-field select:focus {
+      outline: none;
+      border-color: #E3000F;
+      box-shadow: 0 0 0 3px rgba(227,0,15,0.1);
+    }
+
+    .modal-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .modal-checkbox input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #E3000F;
+      border-radius: 4px;
+    }
+
+    .modal-checkbox label {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 500;
+      text-transform: none;
+      cursor: pointer;
+      flex: 1;
+      color: #333;
+    }
+
+    .modal-toggle {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      padding: 14px;
+      background: linear-gradient(135deg, #F9FAFB 0%, #F5F5F5 100%);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all 0.15s;
+    }
+
+    .modal-toggle:hover {
+      border-color: #ddd;
+      background: linear-gradient(135deg, #FFFFFF 0%, #F9F9F9 100%);
+    }
+
+    .modal-toggle input[type="checkbox"] {
+      width: 44px;
+      height: 26px;
+      cursor: pointer;
+      appearance: none;
+      background: #D1D5DB;
+      border-radius: 13px;
+      position: relative;
+      transition: background 0.3s ease;
+      border: none;
+      flex-shrink: 0;
+    }
+
+    .modal-toggle input[type="checkbox"]:checked {
+      background: #E3000F;
+    }
+
+    .modal-toggle input[type="checkbox"]::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .modal-toggle input[type="checkbox"]:checked::after {
+      left: 18px;
+    }
+
+    .modal-toggle label {
+      margin: 0;
+      font-weight: 600;
+      flex: 1;
+      cursor: pointer;
+      color: #333;
+      user-select: none;
+    }
+
+    .modal-field.hidden {
+      display: none;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-modal {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-modal.primary {
+      background: #E3000F;
+      color: white;
+      box-shadow: 0 2px 6px rgba(227,0,15,0.15);
+    }
+
+    .btn-modal.primary:hover {
+      background: #B8000C;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(227,0,15,0.25);
+    }
+
+    .btn-modal.primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-modal.secondary {
+      background: #F3F4F6;
+      color: #333;
+      border: 1px solid var(--border);
+    }
+
+    .btn-modal.secondary:hover {
+      background: #E5E7EB;
+      border-color: #ccc;
+    }
+
+    /* Menu Users Table */
+    .menu-users-wrapper {
+      background: white;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 280px);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .menu-users-scroll {
+      flex: 1;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) var(--bg-input);
+    }
+
+    .menu-users-scroll::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .menu-users-scroll::-webkit-scrollbar-track {
+      background: var(--bg-input);
+    }
+
+    .menu-users-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 5px;
+      border: 2px solid var(--bg-input);
+    }
+
+    .menu-users-scroll::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    .menu-users-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .menu-users-table thead {
+      background: linear-gradient(135deg, var(--bg-input) 0%, #F5F5F5 100%);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .menu-users-table th {
+      padding: 14px 12px;
+      text-align: center;
+      font-weight: 700;
+      color: var(--text-primary);
+      border-bottom: none;
+      white-space: nowrap;
+      vertical-align: middle;
+      min-width: 100px;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+    }
+
+    .menu-users-table th.user-col {
+      width: 220px;
+      position: sticky;
+      left: 0;
+      background: var(--bg-input);
+      z-index: 11;
+      min-width: 220px;
+    }
+
+    .menu-users-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-light);
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .menu-users-table tbody tr:hover {
+      background: var(--table-hover);
+    }
+
+    .menu-users-table td.user-col {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      background: inherit;
+      z-index: 9;
+      border-right: 1px solid var(--border);
+      width: 220px;
+      min-width: 220px;
+    }
+
+    .menu-users-table tbody tr:hover td.user-col {
+      background: var(--table-hover);
+    }
+
+    .user-cell-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .user-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .user-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-role {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .menu-users-actions {
+      padding: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-input);
+    }
+
+    .menu-users-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .btn-save-all {
+      background: #E3000F;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 2px 6px rgba(227,0,15,0.15);
+    }
+    .btn-save-all:hover {
+      background: #B8000C;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(227,0,15,0.25);
+    }
+    .btn-save-all:active { transform: translateY(0); }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .empty-state p {
+      margin: 0;
+    }
+
+    .info-box {
+      background: linear-gradient(135deg, #F0F7FF 0%, #E8F3FF 100%);
+      border-left: 4px solid #2563EB;
+      padding: 14px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #1E40AF;
+      font-weight: 500;
+    }
+
+    /* Custom checkbox for user-menu table */
+    .user-menu-check {
+      position: relative;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      appearance: none;
+      background: var(--bg-card);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      transition: all 0.15s;
+      outline: none;
+    }
+
+    .user-menu-check:hover {
+      border-color: #E3000F;
+    }
+
+    .user-menu-check:checked {
+      background: #E3000F;
+      border-color: #E3000F;
+    }
+
+    .user-menu-check:checked::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .user-menu-check:focus {
+      box-shadow: 0 0 0 2px rgba(227,0,15,0.2);
+    }
+
+    @media (max-width: 1024px) {
+      .menu-list {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 15px;
+      }
+
+      .menu-header > div:first-child h1 {
+        font-size: 28px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .menu-container {
+        padding: 20px 16px;
+        margin: 16px;
+        border-radius: 10px;
+      }
+
+      .menu-list {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .menu-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .menu-header > div:first-child h1 {
+        font-size: 24px;
+      }
+
+      .menu-item-row {
+        padding: 18px;
+      }
+
+      .modal-box {
+        padding: 24px;
+      }
+
+      .modal-title {
+        font-size: 18px;
+      }
+
+      .menu-users-table th,
+      .menu-users-table td {
+        padding: 10px 8px;
+        font-size: 12px;
+      }
+
+      .btn-create-menu {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar"></div>
+
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;flex:1">
+      <button onclick="toggleMobileMenu()" class="mobile-menu-btn">☰</button>
+      <span style="font-size:16px;font-weight:700">Gestor de Menús</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Modo Oscuro"></button>
+      <button onclick="openSearch(window._session)" class="topbar-search-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      </button>
+      <div style="width:1px;height:24px;background:var(--border)"></div>
+      <button onclick="openNotifPanel(window._session)" class="topbar-notif-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span class="topbar-notif-badge" id="bellBadge"></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="menu-container">
+    <div class="breadcrumb-nav">
+      <a href="dashboard.html" class="breadcrumb-link">← Volver a Dashboard</a>
+    </div>
+
+    <div class="menu-header">
+      <div>
+        <h1>Gestor de Menús</h1>
+        <p style="color:var(--text-muted);margin-top:6px">Crea y organiza menús dinámicos para los usuarios</p>
+      </div>
+      <button class="btn-create-menu" onclick="openCreateMenuModal()">+ Nuevo Menú</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('menus')">Menús</button>
+      <button class="tab" onclick="switchTab('users')">Asignar a Usuarios</button>
+    </div>
+
+    <div id="menus" class="tab-content active">
+      <div class="menu-list" id="menuList"></div>
+    </div>
+
+    <div id="users" class="tab-content">
+      <div class="menu-users-wrapper">
+        <div class="menu-users-scroll">
+          <table class="menu-users-table" id="menuUsersTable">
+            <thead id="menuUsersHead">
+              <tr>
+                <th class="user-col">Usuario</th>
+              </tr>
+            </thead>
+            <tbody id="menuUsersBody">
+              <tr>
+                <td class="user-col" style="text-align:center;padding:40px;color:var(--text-muted)">
+                  Cargando usuarios y menús...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="menu-users-actions">
+          <span class="menu-users-count" id="menuUsersCount">0 cambios</span>
+          <button class="btn-save-all" onclick="saveAllMenuUsers()">Guardar Asignaciones</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="menuModal">
+  <div class="modal-box">
+    <div class="modal-title" id="menuModalTitle">Crear Nuevo Menú</div>
+
+    <div class="modal-field">
+      <label>Etiqueta del Menú *</label>
+      <input type="text" id="menuLabel" placeholder="ej: Facturación, Ventas, etc" autocomplete="off"/>
+    </div>
+
+    <div class="modal-field">
+      <label>Ícono</label>
+      <input type="text" id="menuIcon" placeholder="ej: chart, folder, users" autocomplete="off"/>
+    </div>
+
+    <div class="modal-toggle">
+      <input type="checkbox" id="menuIsPowerBI" onchange="togglePowerBIFields()"/>
+      <label for="menuIsPowerBI">📊 Este es un Panel Power BI</label>
+    </div>
+
+    <div id="normalMenuFields">
+      <div class="modal-field">
+        <label>Ruta (Path) *</label>
+        <input type="text" id="menuPath" placeholder="ej: pages/report.html" autocomplete="off"/>
+      </div>
+    </div>
+
+    <div id="powerBIMenuFields" class="hidden">
+      <div class="info-box">
+        💡 Pega el link que obtienes de Power BI con "Compartir" → "Insertar"
+      </div>
+      <div class="modal-field">
+        <label>URL de Power BI *</label>
+        <input type="text" id="menuPowerBIUrl" placeholder="https://app.powerbi.com/view?r=..." autocomplete="off"/>
+      </div>
+    </div>
+
+    <div class="modal-field">
+      <label>Menú Padre (opcional)</label>
+      <select id="menuParent">
+        <option value="">— Sin padre (es raíz) —</option>
+      </select>
+    </div>
+
+    <div class="modal-field">
+      <label>Orden</label>
+      <input type="number" id="menuOrder" value="0" placeholder="0"/>
+    </div>
+
+    <div class="modal-checkbox">
+      <input type="checkbox" id="menuActive" checked/>
+      <label for="menuActive">Activo</label>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-modal secondary" onclick="closeMenuModal()">Cancelar</button>
+      <button class="btn-modal primary" onclick="saveMenuItem()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:500;display:flex;flex-direction:column;gap:10px"></div>
+<div id="sidebarOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;display:none;cursor:pointer" onclick="closeMobileMenu()"></div>
+
+<script src="../js/data.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+
+<script>
+  let _currentSession = null;
+  let _allMenuItems = [];
+  let _allUsers = [];
+  let _editingMenuId = null;
+  let _menuUserState = {}; // _menuUserState[userId][menuId] = boolean
+  let _menuUserChangeCount = 0;
+
+  (async function() {
+    const session = getSession();
+    if (!session) {
+      window.location.href = '../index.html';
+      return;
+    }
+    if (session.role !== 'admin') {
+      window.location.href = 'panels.html';
+      return;
+    }
+
+    _currentSession = session;
+    window._session = session;
+    await renderSidebar(session, 'menu-manager.html');
+    await loadMenuItems();
+    await loadUsers();
+    updateBellBadge(session.id);
+  })();
+
+  async function loadMenuItems() {
+    try {
+      _allMenuItems = await getMenuItems();
+      renderMenuList();
+      populateParentSelect();
+    } catch (e) {
+      showToast('Error al cargar menús: ' + e.message, 'error');
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      _allUsers = await getUsers();
+      _allUsers = _allUsers.filter(u => u.active);
+      await renderUserGrid();
+    } catch (e) {
+      showToast('Error al cargar usuarios: ' + e.message, 'error');
+    }
+  }
+
+  function renderMenuList() {
+    const list = document.getElementById('menuList');
+    if (!_allMenuItems.length) {
+      list.innerHTML = '<div class="empty-state"><p>No hay ítems de menú creados aún.</p></div>';
+      return;
+    }
+
+    const tree = buildMenuTree(_allMenuItems);
+    list.innerHTML = tree.map(node => renderMenuNode(node, 0)).join('');
+  }
+
+  function renderMenuNode(node, depth) {
+    const indent = depth * 20;
+    const hasChildren = node.children && node.children.length > 0;
+    const isPowerBI = node.path && node.path.includes('bi-viewer.html');
+
+    return `
+      <div style="margin-left:${indent}px">
+        <div class="menu-item-row">
+          <div class="menu-item-info" style="flex:1">
+            <div class="menu-item-label">${node.label}</div>
+            <div class="menu-item-path">${node.path}</div>
+            <div style="margin-top:4px">
+              <span class="menu-item-badge ${isPowerBI ? '' : 'normal'}">${isPowerBI ? '📊 Power BI' : 'Normal'}</span>
+            </div>
+          </div>
+          <span class="menu-item-status ${!node.isActive ? 'inactive' : ''}">${node.isActive ? 'Activo' : 'Inactivo'}</span>
+          <div class="menu-item-actions">
+            <button class="btn-icon" onclick="editMenuItem(${node.id})" title="Editar">✏️</button>
+            <button class="btn-icon danger" onclick="handleDeleteMenuItem(${node.id})" title="Eliminar">🗑️</button>
+          </div>
+        </div>
+        ${hasChildren ? node.children.map(child => renderMenuNode(child, depth + 1)).join('') : ''}
+      </div>
+    `;
+  }
+
+  async function renderUserGrid() {
+    const head = document.getElementById('menuUsersHead');
+    const body = document.getElementById('menuUsersBody');
+
+    // Get root menu items (no parent)
+    const rootMenuItems = _allMenuItems.filter(m => !m.parentId);
+
+    if (!_allUsers.length || !rootMenuItems.length) {
+      body.innerHTML = `
+        <tr>
+          <td class="user-col" style="text-align:center;padding:40px;color:var(--text-muted)">
+            ${!_allUsers.length ? 'No hay usuarios' : 'No hay menús'}
+          </td>
+        </tr>`;
+      return;
+    }
+
+    // Load permissions for all users
+    for (const user of _allUsers) {
+      const userMenuIds = await getMenuPermissionsForUser(user.id);
+      _menuUserState[user.id] = {};
+      rootMenuItems.forEach(menu => {
+        _menuUserState[user.id][menu.id] = userMenuIds.includes(menu.id);
+      });
+    }
+
+    // Build header with menus
+    const headerRow = `<tr>
+      <th class="user-col">Usuario</th>
+      ${rootMenuItems.map(menu => `
+        <th title="${menu.label}">
+          ${menu.icon || '📋'} ${menu.label}
+        </th>
+      `).join('')}
+    </tr>`;
+    head.innerHTML = headerRow;
+
+    // Build user rows
+    const userRows = _allUsers.map(user => {
+      const bg = avatarColor(user.id);
+      const initials = user.avatar || (user.name ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : '?');
+      const role = user.role === 'admin' ? 'Admin' : 'Usuario';
+
+      return `<tr data-user-id="${user.id}">
+        <td class="user-col">
+          <div class="user-cell-wrap">
+            <div class="user-avatar" style="background:${bg}">${initials}</div>
+            <div class="user-info">
+              <div class="user-name">${user.name}</div>
+              <div class="user-role">${role}</div>
+            </div>
+          </div>
+        </td>
+        ${rootMenuItems.map(menu => {
+          const isChecked = _menuUserState[user.id][menu.id];
+          return `<td data-menu-id="${menu.id}">
+            <input type="checkbox"
+              id="menu-user-${menu.id}-${user.id}"
+              class="user-menu-check"
+              data-user-id="${user.id}"
+              data-menu-id="${menu.id}"
+              ${isChecked ? 'checked' : ''}
+              onchange="toggleMenuUser(${menu.id}, ${user.id}, this.checked)"
+            />
+          </td>`;
+        }).join('')}
+      </tr>`;
+    }).join('');
+
+    body.innerHTML = userRows;
+    _menuUserChangeCount = 0;
+    updateMenuUserChangeCount();
+  }
+
+  function toggleMenuUser(menuId, userId, checked) {
+    menuId = Number(menuId);
+    userId = Number(userId);
+
+    const oldValue = _menuUserState[userId][menuId];
+    _menuUserState[userId][menuId] = checked;
+
+    if (oldValue !== checked) {
+      _menuUserChangeCount += checked ? 1 : -1;
+      updateMenuUserChangeCount();
+    }
+  }
+
+  function updateMenuUserChangeCount() {
+    const el = document.getElementById('menuUsersCount');
+    if (_menuUserChangeCount === 0) {
+      el.textContent = 'Sin cambios';
+    } else {
+      el.textContent = `${_menuUserChangeCount} cambio${_menuUserChangeCount !== 1 ? 's' : ''}`;
+    }
+  }
+
+  async function saveAllMenuUsers() {
+    const rootMenuItems = _allMenuItems.filter(m => !m.parent_id);
+
+    for (const user of _allUsers) {
+      const selectedMenuIds = Object.entries(_menuUserState[user.id])
+        .filter(([menuId, hasAccess]) => hasAccess)
+        .map(([menuId]) => Number(menuId));
+
+      await setMenuPermissionsForUser(user.id, selectedMenuIds);
+    }
+
+    _menuUserChangeCount = 0;
+    updateMenuUserChangeCount();
+    showToast('Asignaciones de menús guardadas correctamente.', 'success');
+  }
+
+  function populateParentSelect() {
+    const select = document.getElementById('menuParent');
+    const rootItems = _allMenuItems.filter(m => !m.parentId);
+    select.innerHTML = '<option value="">— Sin padre (es raíz) —</option>' + rootItems.map(m => `<option value="${m.id}">${m.label}</option>`).join('');
+  }
+
+  function togglePowerBIFields() {
+    const isPowerBI = document.getElementById('menuIsPowerBI').checked;
+    document.getElementById('normalMenuFields').classList.toggle('hidden', isPowerBI);
+    document.getElementById('powerBIMenuFields').classList.toggle('hidden', !isPowerBI);
+  }
+
+  function openCreateMenuModal() {
+    _editingMenuId = null;
+    document.getElementById('menuModalTitle').textContent = 'Crear Nuevo Menú';
+    document.getElementById('menuLabel').value = '';
+    document.getElementById('menuIcon').value = '';
+    document.getElementById('menuPath').value = '';
+    document.getElementById('menuPowerBIUrl').value = '';
+    document.getElementById('menuIsPowerBI').checked = false;
+    document.getElementById('menuParent').value = '';
+    document.getElementById('menuOrder').value = '0';
+    document.getElementById('menuActive').checked = true;
+    togglePowerBIFields();
+    openModal('menuModal');
+  }
+
+  async function editMenuItem(id) {
+    const item = _allMenuItems.find(m => m.id === id);
+    if (!item) return;
+
+    _editingMenuId = id;
+    document.getElementById('menuModalTitle').textContent = 'Editar Menú';
+    document.getElementById('menuLabel').value = item.label;
+    document.getElementById('menuIcon').value = item.icon || '';
+    document.getElementById('menuParent').value = item.parentId || '';
+    document.getElementById('menuOrder').value = item.orderIndex;
+    document.getElementById('menuActive').checked = item.isActive;
+
+    const isPowerBI = item.path && item.path.includes('bi-viewer.html');
+    document.getElementById('menuIsPowerBI').checked = isPowerBI;
+
+    if (isPowerBI) {
+      const urlMatch = item.path.match(/url=([^&]+)/);
+      const url = urlMatch ? decodeURIComponent(urlMatch[1]) : '';
+      document.getElementById('menuPowerBIUrl').value = url;
+    } else {
+      document.getElementById('menuPath').value = item.path;
+    }
+
+    togglePowerBIFields();
+    openModal('menuModal');
+  }
+
+  function closeMenuModal() {
+    closeModal('menuModal');
+  }
+
+  async function saveMenuItem() {
+    const label = document.getElementById('menuLabel').value.trim();
+    const icon = document.getElementById('menuIcon').value.trim();
+    const parentId = document.getElementById('menuParent').value || null;
+    const orderIndex = parseInt(document.getElementById('menuOrder').value) || 0;
+    const isActive = document.getElementById('menuActive').checked;
+    const isPowerBI = document.getElementById('menuIsPowerBI').checked;
+
+    let path;
+
+    if (isPowerBI) {
+      const powerBIUrl = document.getElementById('menuPowerBIUrl').value.trim();
+      if (!label || !powerBIUrl) {
+        showToast('Completa los campos obligatorios', 'warn');
+        return;
+      }
+      // Generar URL de bi-viewer
+      path = `pages/bi-viewer.html?title=${encodeURIComponent(label)}&url=${encodeURIComponent(powerBIUrl)}&icon=${encodeURIComponent(icon || '📊')}`;
+    } else {
+      path = document.getElementById('menuPath').value.trim();
+      if (!label || !path) {
+        showToast('Completa los campos obligatorios', 'warn');
+        return;
+      }
+    }
+
+    try {
+      if (_editingMenuId) {
+        await updateMenuItem(_editingMenuId, { label, icon, path, parentId, orderIndex, isActive });
+        showToast('Menú actualizado', 'success');
+      } else {
+        await createMenuItem({ label, icon, path, parentId, orderIndex, isActive });
+        showToast('Menú creado', 'success');
+      }
+      closeMenuModal();
+      await loadMenuItems();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+  }
+
+  async function handleDeleteMenuItem(id) {
+    if (!confirm('¿Estás seguro?')) return;
+    try {
+      await window.deleteMenuItem(id);
+      showToast('Menú eliminado', 'success');
+      await loadMenuItems();
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    }
+  }
+
+  async function saveUserMenus(userId) {
+    // Esta función ahora está deprecada, usa saveAllMenuUsers() en su lugar
+    await saveAllMenuUsers();
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.getElementById(tab).classList.add('active');
+    document.querySelector(`.tab[onclick*="'${tab}'"]`).classList.add('active');
+  }
+
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+  window.toggleMobileMenu = toggleMobileMenu;
+  window.closeMobileMenu = closeMobileMenu;
+  window.openSearch = openSearch;
+  window.closeSearch = closeSearch;
+  window.openNotifPanel = openNotifPanel;
+  window.closeNotifPanel = closeNotifPanel;
+  window.showToast = showToast;
+  window.updateBellBadge = updateBellBadge;
+  window.handleDeleteMenuItem = handleDeleteMenuItem;
+  window.togglePowerBIFields = togglePowerBIFields;
+  window.openCreateMenuModal = openCreateMenuModal;
+  window.editMenuItem = editMenuItem;
+  window.closeMenuModal = closeMenuModal;
+  window.saveMenuItem = saveMenuItem;
+  window.saveUserMenus = saveUserMenus;
+  window.switchTab = switchTab;
+  window.toggleMenuUser = toggleMenuUser;
+  window.saveAllMenuUsers = saveAllMenuUsers;
+</script>
+</body>
+</html>

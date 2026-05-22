@@ -44,6 +44,8 @@ async function validateLogin(username, password) {
   }
 }
 
+/* ── SESSION ── */
+
 /* ── HELPERS ── */
 function formatDate(ts) {
   if (!ts) return '—';
@@ -60,7 +62,7 @@ function avatarColor(id) {
   return colors[Math.abs(Number(id) % colors.length)];
 }
 
-/* ── Normalizers (snake_case API → camelCase frontend) ── */
+/* ── Normalizers ── */
 function normalizePanel(p) {
   if (!p) return null;
   return {
@@ -88,6 +90,24 @@ function normalizeUser(u) {
     avatar:       u.avatar || makeInitials(u.name),
     profilePhoto: u.profile_photo || null,
     createdAt:    formatDate(u.created_at),
+  };
+}
+function normalizeMenuItem(m) {
+  if (!m) return null;
+  // Normalizar ruta: si no comienza con /, agregarlo (excepto si es #)
+  let path = m.path || '#';
+  if (path !== '#' && !path.startsWith('/')) {
+    path = '/' + path;
+  }
+  return {
+    id:          m.id,
+    label:       m.label,
+    icon:        m.icon || '',
+    path:        path,
+    parentId:    m.parent_id || null,
+    orderIndex:  m.order_index || 0,
+    isActive:    m.is_active,
+    createdAt:   m.created_at,
   };
 }
 
@@ -129,10 +149,78 @@ async function deletePanel(id) {
   return apiFetch(`/api/panels/${id}`, { method:'DELETE' });
 }
 
-/* ── PERMISSIONS ── */
+/* ── PERMISSIONS (paneles) ── */
 async function getPanelPermissions(panelId) { return await apiFetch(`/api/permissions/${panelId}`) || []; }
 async function setPanelPermissions(panelId, userIds) {
   return apiFetch(`/api/permissions/${panelId}`, { method:'POST', body: JSON.stringify({ userIds }) });
+}
+
+/* ── MENU ITEMS  ← NUEVO ── */
+async function getMenuItems() {
+  const r = await apiFetch('/api/menu');
+  return (r||[]).map(normalizeMenuItem);
+}
+async function getMenuForUser(userId) {
+  const r = await apiFetch(`/api/menu/user/${userId}`);
+  return (r||[]).map(normalizeMenuItem);
+}
+async function createMenuItem(data) {
+  const r = await apiFetch('/api/menu', {
+    method: 'POST',
+    body: JSON.stringify({
+      label:       data.label,
+      icon:        data.icon || '',
+      path:        data.path || '#',
+      parent_id:   data.parentId || null,
+      order_index: data.orderIndex || 0,
+      is_active:   data.isActive !== false,
+    }),
+  });
+  return normalizeMenuItem(r);
+}
+async function updateMenuItem(id, data) {
+  const r = await apiFetch(`/api/menu/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      label:       data.label,
+      icon:        data.icon || '',
+      path:        data.path || '#',
+      parent_id:   data.parentId || null,
+      order_index: data.orderIndex || 0,
+      is_active:   data.isActive !== false,
+    }),
+  });
+  return normalizeMenuItem(r);
+}
+async function deleteMenuItem(id) {
+  return apiFetch(`/api/menu/${id}`, { method: 'DELETE' });
+}
+
+/* ── MENU PERMISSIONS  ← NUEVO ── */
+async function getMenuPermissionsForUser(userId) {
+  return await apiFetch(`/api/menu-permissions/user/${userId}`) || [];
+}
+async function setMenuPermissionsForUser(userId, menuItemIds) {
+  return apiFetch(`/api/menu-permissions/user/${userId}`, {
+    method: 'POST',
+    body: JSON.stringify({ menuItemIds }),
+  });
+}
+
+/* ── Organizar menú en árbol (padre → hijos) ── */
+function buildMenuTree(flatItems) {
+  const map = {};
+  flatItems.forEach(item => { map[item.id] = { ...item, children: [] }; });
+  const roots = [];
+  flatItems.forEach(item => {
+    if (item.parentId && map[item.parentId]) {
+      map[item.parentId].children.push(map[item.id]);
+    } else {
+      roots.push(map[item.id]);
+    }
+  });
+  const sort = arr => arr.sort((a,b) => a.orderIndex - b.orderIndex).map(n => ({ ...n, children: sort(n.children) }));
+  return sort(roots);
 }
 
 /* ── FAVORITES ── */
@@ -145,7 +233,7 @@ async function toggleFavorite(userId, panelId) {
 
 /* ── LOGS ── */
 async function getLogs() { return await apiFetch('/api/logs') || []; }
-function addLog() {} // El backend lo maneja automáticamente
+function addLog() {}
 
 /* ── NOTIFICATIONS ── */
 async function getNotifications(userId)  { return await apiFetch(`/api/notifications/${userId}`) || []; }
@@ -153,12 +241,17 @@ async function getUnreadCount(userId)    { const r = await apiFetch(`/api/notifi
 async function markAllRead(userId)       { return apiFetch(`/api/notifications/${userId}/read-all`, { method:'PATCH' }); }
 
 /* ── Expose all globally ── */
-window.validateLogin=validateLogin; window.getUsers=getUsers; window.getUserById=getUserById;
+window.validateLogin=validateLogin;
+window.getUsers=getUsers; window.getUserById=getUserById;
 window.createUser=createUser; window.updateUser=updateUser; window.deleteUser=deleteUser;
 window.toggleUserActive=toggleUserActive; window.getPanels=getPanels; window.getPanelById=getPanelById;
 window.getAccessiblePanels=getAccessiblePanels; window.createPanel=createPanel;
 window.updatePanel=updatePanel; window.deletePanel=deletePanel;
 window.getPanelPermissions=getPanelPermissions; window.setPanelPermissions=setPanelPermissions;
+window.getMenuItems=getMenuItems; window.getMenuForUser=getMenuForUser;
+window.createMenuItem=createMenuItem; window.updateMenuItem=updateMenuItem; window.deleteMenuItem=deleteMenuItem;
+window.getMenuPermissionsForUser=getMenuPermissionsForUser; window.setMenuPermissionsForUser=setMenuPermissionsForUser;
+window.buildMenuTree=buildMenuTree;
 window.getFavorites=getFavorites; window.isFavorite=isFavorite; window.toggleFavorite=toggleFavorite;
 window.getLogs=getLogs; window.addLog=addLog;
 window.getNotifications=getNotifications; window.getUnreadCount=getUnreadCount; window.markAllRead=markAllRead;

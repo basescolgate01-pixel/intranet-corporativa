@@ -1348,6 +1348,50 @@ input[type="radio"].color-radio:checked + .color-option {
   }
 }
 
+/* ════════════════════════════════════════════════
+   SIDEBAR COLLAPSE — Desktop
+   ════════════════════════════════════════════════ */
+
+/* Estado colapsado del sidebar */
+.sidebar.collapsed {
+  width: 0 !important;
+  overflow: hidden;
+  transition: width 0.3s ease;
+}
+
+/* Main ajustado cuando sidebar está colapsado */
+.main.sidebar-collapsed {
+  margin-left: 0 !important;
+  transition: margin-left 0.3s ease;
+}
+
+/* Botón toggle en topbar */
+.topbar-sidebar-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 20px;
+  padding: 0;
+  margin-right: 8px;
+  transition: color 0.2s;
+}
+
+.topbar-sidebar-toggle:hover {
+  color: var(--red);
+}
+
+@media (min-width: 769px) {
+  .topbar-sidebar-toggle {
+    display: flex;
+  }
+}
+
 @media (max-width: 480px) {
   .topbar-title {
     font-size: 14px;

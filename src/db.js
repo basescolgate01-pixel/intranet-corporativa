@@ -66,6 +66,25 @@ async function initDB() {
         read BOOLEAN DEFAULT false,
         ts TIMESTAMPTZ DEFAULT NOW()
       );
+
+      CREATE TABLE IF NOT EXISTS menu_items (
+        id SERIAL PRIMARY KEY,
+        label VARCHAR(100) NOT NULL,
+        icon VARCHAR(50) DEFAULT '',
+        path VARCHAR(255) NOT NULL,
+        parent_id INTEGER REFERENCES menu_items(id) ON DELETE CASCADE,
+        order_index INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT true,
+        created_at DATE DEFAULT CURRENT_DATE,
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS menu_user_access (
+        id SERIAL PRIMARY KEY,
+        menu_item_id INTEGER REFERENCES menu_items(id) ON DELETE CASCADE,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE(menu_item_id, user_id)
+      );
     `);
 
     // Insert default admin if not exists
@@ -108,11 +127,65 @@ async function initDB() {
         await client.query(`INSERT INTO permissions (panel_id, user_id) VALUES ($1, 1) ON CONFLICT DO NOTHING`, [p.id]);
       }
 
+      // Insert default menu items
+      const menuRes = await client.query(`
+        INSERT INTO menu_items (label, icon, path, parent_id, order_index, is_active, created_by)
+        VALUES
+          ('Mis Paneles', 'grid', 'pages/panels.html', NULL, 1, true, 1),
+          ('Dashboard', 'activity', 'pages/dashboard.html', NULL, 2, true, 1),
+          ('Usuarios', 'users', 'pages/users.html', NULL, 3, true, 1),
+          ('Permisos', 'lock', 'pages/permissions.html', NULL, 4, true, 1),
+          ('Registro', 'file-text', 'pages/logs.html', NULL, 5, true, 1),
+          ('Analytics', 'chart', 'pages/admin-analytics.html', NULL, 6, true, 1)
+        RETURNING id
+      `);
+
+      // Add default menu access for admin (gets all)
+      for (const m of menuRes.rows) {
+        await client.query(`INSERT INTO menu_user_access (menu_item_id, user_id) VALUES ($1, 1) ON CONFLICT DO NOTHING`, [m.id]);
+      }
+
+      // Add menu access for regular users (only Mis Paneles and their assigned items)
+      const usersRes = await client.query('SELECT id FROM users WHERE role = $1', ['user']);
+      for (const u of usersRes.rows) {
+        await client.query(`INSERT INTO menu_user_access (menu_item_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [menuRes.rows[0].id, u.id]);
+      }
+
       await client.query(`
         INSERT INTO logs (user_id, action, detail) VALUES (1, 'SYSTEM', 'Base de datos inicializada')
       `);
 
       console.log('✓ Default data inserted');
+    } else {
+      // Si la BD ya existe, verifica si menu_items está vacía
+      // Si está vacía, inserta los menús por defecto (migración)
+      const menuCount = await client.query('SELECT COUNT(*) as count FROM menu_items');
+      if (parseInt(menuCount.rows[0].count) === 0) {
+        console.log('→ Inserting default menu items (migration)...');
+        const menuRes = await client.query(`
+          INSERT INTO menu_items (label, icon, path, parent_id, order_index, is_active, created_by)
+          VALUES
+            ('Mis Paneles', 'grid', '/pages/panels.html', NULL, 1, true, 1),
+            ('Dashboard', 'activity', '/pages/dashboard.html', NULL, 2, true, 1),
+            ('Usuarios', 'users', '/pages/users.html', NULL, 3, true, 1),
+            ('Permisos', 'lock', '/pages/permissions.html', NULL, 4, true, 1),
+            ('Registro', 'file-text', '/pages/logs.html', NULL, 5, true, 1)
+          RETURNING id
+        `);
+
+        // Add default menu access for admin
+        for (const m of menuRes.rows) {
+          await client.query(`INSERT INTO menu_user_access (menu_item_id, user_id) VALUES ($1, 1) ON CONFLICT DO NOTHING`, [m.id]);
+        }
+
+        // Add menu access for regular users
+        const usersRes = await client.query('SELECT id FROM users WHERE role = $1', ['user']);
+        for (const u of usersRes.rows) {
+          await client.query(`INSERT INTO menu_user_access (menu_item_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [menuRes.rows[0].id, u.id]);
+        }
+
+        console.log('✓ Menu items migrated');
+      }
     }
 
     console.log('✓ Database ready');
@@ -121,4 +194,45 @@ async function initDB() {
   }
 }
 
-module.exports = { pool, initDB };
+// Ensure Analytics menu item exists (for backwards compatibility with existing DBs)
+async function ensureAnalyticsMenu() {
+  const client = await pool.connect();
+  try {
+    // Check if Analytics menu item already exists
+    const existing = await client.query(
+      "SELECT id FROM menu_items WHERE label = 'Analytics'"
+    );
+
+    if (existing.rows.length === 0) {
+      console.log('→ Creating Analytics menu item...');
+
+      // Create Analytics menu item
+      const menuRes = await client.query(`
+        INSERT INTO menu_items (label, icon, path, parent_id, order_index, is_active, created_by)
+        VALUES ('Analytics', 'chart', 'pages/admin-analytics.html', NULL, 6, true, 1)
+        RETURNING id
+      `);
+
+      const analyticsMenuId = menuRes.rows[0].id;
+
+      // Assign to admin user (ID 1)
+      await client.query(
+        'INSERT INTO menu_user_access (menu_item_id, user_id) VALUES ($1, 1) ON CONFLICT DO NOTHING',
+        [analyticsMenuId]
+      );
+
+      // Log the action
+      await client.query(
+        "INSERT INTO logs (user_id, action, detail) VALUES (1, 'SYSTEM', 'Analytics menu item created')"
+      );
+
+      console.log('✓ Analytics menu item created');
+    }
+  } catch (e) {
+    console.error('Error ensuring Analytics menu:', e.message);
+  } finally {
+    client.release();
+  }
+}
+
+module.exports = { pool, initDB, ensureAnalyticsMenu };

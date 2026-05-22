@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initDB } = require('./db');
+const { initDB, ensureAnalyticsMenu } = require('./db');
 const routes = require('./routes');
 
 const app = express();
@@ -27,7 +27,10 @@ app.get('*', (req, res) => {
 
 // Start
 initDB()
-  .then(() => {
+  .then(async () => {
+    // Ensure Analytics menu exists (for backwards compatibility)
+    await ensureAnalyticsMenu();
+
     app.listen(PORT, () => {
       console.log(`✓ Server running on port ${PORT}`);
       console.log(`✓ Frontend: http://localhost:${PORT}`);

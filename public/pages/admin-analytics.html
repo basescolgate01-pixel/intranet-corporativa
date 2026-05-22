@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics — Intranet Corporativa</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/shared.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+  <style>
+    .analytics-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .stat-content {
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .stat-sublabel {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .chart-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-bottom: 16px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 300px;
+    }
+
+    .table-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .table-card h3 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-scroll {
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .table-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
+    }
+
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .analytics-table th {
+      padding: 12px 24px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      background: var(--bg-input);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .analytics-table td {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-secondary);
+    }
+
+    .analytics-table tr:hover {
+      background: var(--table-hover);
+    }
+
+    .user-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .badge-action {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .action-LOGIN { background: rgba(26, 155, 60, 0.12); color: var(--icon-green-txt); }
+    .action-LOGOUT { background: var(--log-action-bg); color: var(--text-muted); }
+    .action-CREATE_USER { background: rgba(26, 155, 60, 0.12); color: var(--icon-green-txt); }
+    .action-UPDATE_USER { background: rgba(245, 158, 11, 0.12); color: var(--icon-orange-txt); }
+    .action-UPDATE_PERM { background: rgba(139, 92, 246, 0.12); color: #A78BFA; }
+    .action-default { background: rgba(155, 168, 188, 0.12); color: var(--text-muted); }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .time-badge {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .analytics-container {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-wrap {
+        height: 250px;
+      }
+
+      .table-scroll {
+        max-height: 300px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar"></aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Analytics</h1>
+      <div class="breadcrumb">Administración / Analytics</div>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" onclick="toggleTheme()" title="Modo Oscuro"></button>
+      <button class="topbar-btn" onclick="refreshAnalytics()" title="Actualizar datos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+        </svg>
+      </button>
+      <div style="position:relative">
+        <button class="topbar-btn" onclick="openNotifPanel(session)" title="Notificaciones">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <span id="bellBadge" style="position:absolute;top:2px;right:2px;min-width:16px;height:16px;background:var(--red);border-radius:10px;font-size:9px;font-weight:700;color:white;display:none;align-items:center;justify-content:center;padding:0 4px;pointer-events:none"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content">
+    <!-- STAT CARDS -->
+    <div class="analytics-container" id="statCards">
+      <div class="loading"><div class="spinner"></div> Cargando estadísticas...</div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="charts-grid" style="grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 24px;">
+      <div class="chart-card">
+        <h3 class="chart-title">Actividad Últimos 30 Días</h3>
+        <div class="chart-wrap" style="height: 300px;">
+          <canvas id="activityChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Actividad por Hora</h3>
+        <div class="chart-wrap" style="height: 300px;">
+          <canvas id="hourlyChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h3 class="chart-title">Usuarios por Rol</h3>
+        <div class="chart-wrap" style="height: 300px;">
+          <canvas id="rolesChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLES -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px;">
+      <div class="table-card">
+        <h3>Últimos Inicios de Sesión</h3>
+        <div class="table-scroll">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Último Acceso</th>
+              </tr>
+            </thead>
+            <tbody id="lastLoginTbody">
+              <tr><td colspan="2" class="loading"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h3>Paneles Más Visitados</h3>
+        <div class="table-scroll">
+          <table class="analytics-table">
+            <thead>
+              <tr>
+                <th>Panel</th>
+                <th>Vistas</th>
+              </tr>
+            </thead>
+            <tbody id="topPanelsTbody">
+              <tr><td colspan="2" class="loading"><div class="spinner"></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT ACTIVITIES -->
+    <div class="table-card" style="margin-top: 24px;">
+      <h3>Últimas Actividades</h3>
+      <div class="table-scroll">
+        <table class="analytics-table">
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Acción</th>
+              <th>Detalles</th>
+              <th>Hora</th>
+            </tr>
+          </thead>
+          <tbody id="recentActivitiesTbody">
+            <tr><td colspan="4" class="loading"><div class="spinner"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+let session = null;
+let charts = {};
+
+// Helper: Get authorization header
+function getAuthHeader() {
+  const token = localStorage.getItem('intranet_token');
+  return { 'Authorization': `Bearer ${token}` };
+}
+
+// Color palettes
+const colors = {
+  red: '#E3000F',
+  blue: '#003DA5',
+  green: '#1A9B3C',
+  orange: '#F59E0B',
+  purple: '#A78BFA',
+  gray: '#9BA8BC'
+};
+
+// Helper: Get initials for avatar
+function getInitials(name) {
+  return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+}
+
+// Helper: Random background color for avatars
+function getAvatarBg(name) {
+  const colors = ['#E3000F', '#003DA5', '#1A9B3C', '#F59E0B', '#8B5CF6', '#EC4899'];
+  const index = name.charCodeAt(0) % colors.length;
+  return colors[index];
+}
+
+// Helper: Format time
+function formatTime(ts) {
+  if (!ts) return 'N/A';
+  const date = new Date(ts);
+  const now = new Date();
+  const diff = now - date;
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+
+  if (mins < 1) return 'Hace unos segundos';
+  if (mins < 60) return `Hace ${mins}m`;
+  if (hours < 24) return `Hace ${hours}h`;
+  if (days < 7) return `Hace ${days}d`;
+  return date.toLocaleDateString('es-ES');
+}
+
+// Load stats
+async function loadStats() {
+  try {
+    const res = await fetch('/api/analytics/users-stats', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const html = `
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(26, 155, 60, 0.12); color: var(--icon-green-txt)">👥</div>
+        <div class="stat-content">
+          <div class="stat-label">Usuarios Total</div>
+          <div class="stat-value">${data.total}</div>
+          <div class="stat-sublabel">${data.active} activos, ${data.inactive} inactivos</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(0, 61, 165, 0.12); color: var(--badge-blue-txt)">🟢</div>
+        <div class="stat-content">
+          <div class="stat-label">Usuarios Activos</div>
+          <div class="stat-value">${data.active}</div>
+          <div class="stat-sublabel">${Math.round(data.active / data.total * 100)}% del total</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(227, 0, 15, 0.12); color: var(--icon-red-txt)">📊</div>
+        <div class="stat-content">
+          <div class="stat-label">Paneles</div>
+          <div class="stat-value" id="panelCount">-</div>
+          <div class="stat-sublabel">Total de dashboards Power BI</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.12); color: var(--icon-orange-txt)">⚡</div>
+        <div class="stat-content">
+          <div class="stat-label">Online Ahora</div>
+          <div class="stat-value" id="onlineCount">-</div>
+          <div class="stat-sublabel">Usuarios conectados en tiempo real</div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('statCards').innerHTML = html;
+
+    // Load panel count
+    const panelsRes = await fetch('/api/panels', {
+      headers: getAuthHeader()
+    });
+    const panels = await panelsRes.json();
+    document.getElementById('panelCount').textContent = panels.length;
+
+    // Estimate online users (last 5 min de logins)
+    const activitiesRes = await fetch('/api/analytics/recent-activities?limit=1000', {
+      headers: getAuthHeader()
+    });
+    const activities = await activitiesRes.json();
+    const fiveMinsAgo = Date.now() - 5 * 60000;
+    const onlineUsers = new Set(
+      activities
+        .filter(a => a.action === 'LOGIN' && new Date(a.ts).getTime() > fiveMinsAgo)
+        .map(a => a.user_id)
+    ).size;
+    document.getElementById('onlineCount').textContent = onlineUsers;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Load activity timeline chart
+async function loadActivityChart() {
+  try {
+    const res = await fetch('/api/analytics/activity-timeline', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const labels = data.map(d => new Date(d.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }));
+    const counts = data.map(d => d.count);
+
+    if (charts.activity) charts.activity.destroy();
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    charts.activity = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Actividad Diaria',
+          data: counts,
+          borderColor: colors.red,
+          backgroundColor: 'rgba(227, 0, 15, 0.05)',
+          borderWidth: 2.5,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: colors.red,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--border-light)' } },
+          x: { ticks: { color: 'var(--text-muted)' }, grid: { display: false } }
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Load hourly activity chart
+async function loadHourlyChart() {
+  try {
+    const res = await fetch('/api/analytics/hourly-activity', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const labels = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
+    const counts = labels.map((_, i) => {
+      const d = data.find(x => x.hour == i);
+      return d ? parseInt(d.count) : 0;
+    });
+
+    if (charts.hourly) charts.hourly.destroy();
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    charts.hourly = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Actividad por Hora',
+          data: counts,
+          backgroundColor: colors.blue,
+          borderColor: 'transparent',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { color: 'var(--text-muted)' }, grid: { color: 'var(--border-light)' } },
+          x: { ticks: { color: 'var(--text-muted)' }, grid: { display: false } }
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Load actions breakdown chart
+async function loadActionsChart() {
+  try {
+    const res = await fetch('/api/analytics/action-breakdown', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const labels = data.map(d => d.action);
+    const counts = data.map(d => d.count);
+    const gradientColors = ['#E3000F', '#003DA5', '#1A9B3C', '#F59E0B', '#8B5CF6', '#EC4899', '#06B6D4', '#EF4444'];
+
+    if (charts.actions) charts.actions.destroy();
+    const ctx = document.getElementById('actionsChart').getContext('2d');
+    charts.actions = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: counts,
+          backgroundColor: gradientColors.slice(0, labels.length),
+          borderColor: 'white',
+          borderWidth: 3,
+          hoverBorderWidth: 4,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: 'var(--text-secondary)',
+              padding: 15,
+              font: { size: 12, weight: '600' },
+              usePointStyle: true,
+              pointStyle: 'circle'
+            }
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Load roles chart
+async function loadRolesChart() {
+  try {
+    const res = await fetch('/api/analytics/users-stats', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const labels = data.byRole.map(r => r.role.charAt(0).toUpperCase() + r.role.slice(1));
+    const counts = data.byRole.map(r => r.count);
+    const gradientColors = ['#E3000F', '#1A9B3C', '#003DA5', '#F59E0B'];
+
+    if (charts.roles) charts.roles.destroy();
+    const ctx = document.getElementById('rolesChart').getContext('2d');
+    charts.roles = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Cantidad de Usuarios',
+          data: counts,
+          backgroundColor: gradientColors.slice(0, labels.length),
+          borderColor: 'transparent',
+          borderRadius: 8,
+          borderSkipped: false,
+          hoverBackgroundColor: ['#CC0000', '#158035', '#002580', '#E08C00'],
+          hoverBorderRadius: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'x',
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: 'var(--text-secondary)',
+              padding: 15,
+              font: { size: 12, weight: '600' }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: 'var(--text-muted)',
+              font: { size: 11 },
+              stepSize: 1
+            },
+            grid: {
+              color: 'var(--border-light)',
+              drawBorder: false
+            }
+          },
+          x: {
+            ticks: {
+              color: 'var(--text-muted)',
+              font: { size: 12, weight: '600' }
+            },
+            grid: { display: false, drawBorder: false }
+          }
+        }
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Load last logins table
+async function loadLastLogins() {
+  try {
+    const res = await fetch('/api/analytics/users-stats', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const html = data.lastLogin.map(user => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar" style="background: ${getAvatarBg(user.name)}">${getInitials(user.name)}</div>
+            <div>
+              <div style="font-weight: 600; color: var(--text-primary)">${user.name}</div>
+              <div style="font-size: 11px; color: var(--text-muted)">${user.username}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="time-badge">${formatTime(user.last_login)}</span></td>
+      </tr>
+    `).join('');
+
+    document.getElementById('lastLoginTbody').innerHTML = html || '<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 20px;">Sin datos</td></tr>';
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Load top panels table
+async function loadTopPanels() {
+  try {
+    const res = await fetch('/api/analytics/panels-stats', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const html = data.topPanels.slice(0, 10).map(panel => `
+      <tr>
+        <td style="color: var(--text-primary); font-weight: 600">${panel.title}</td>
+        <td><strong>${panel.views || 0}</strong></td>
+      </tr>
+    `).join('');
+
+    document.getElementById('topPanelsTbody').innerHTML = html || '<tr><td colspan="2" style="text-align: center; color: var(--text-muted); padding: 20px;">Sin datos</td></tr>';
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Load recent activities table
+async function loadRecentActivities() {
+  try {
+    const res = await fetch('/api/analytics/recent-activities?limit=15', {
+      headers: getAuthHeader()
+    });
+    const data = await res.json();
+
+    const html = data.map(activity => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar" style="background: ${getAvatarBg(activity.name || 'Unknown')}">${getInitials(activity.name || 'Unknown')}</div>
+            <div>
+              <div style="font-weight: 600; color: var(--text-primary)">${activity.name || 'Sistema'}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge-action action-${activity.action}">${activity.action}</span></td>
+        <td style="color: var(--text-secondary); font-size: 12px">${activity.detail || '-'}</td>
+        <td><span class="time-badge">${formatTime(activity.ts)}</span></td>
+      </tr>
+    `).join('');
+
+    document.getElementById('recentActivitiesTbody').innerHTML = html || '<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Sin datos</td></tr>';
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+// Refresh all data
+async function refreshAnalytics() {
+  const btn = event.target.closest('button');
+  btn.style.animation = 'spin 1s ease-in-out';
+
+  await loadStats();
+  await loadActivityChart();
+  await loadHourlyChart();
+  await loadActionsChart();
+  await loadRolesChart();
+  await loadLastLogins();
+  await loadTopPanels();
+  await loadRecentActivities();
+
+  btn.style.animation = 'none';
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', async () => {
+  session = requireAuth(true); // true = admin only
+  if (!session) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  renderSidebar(session, '/pages/admin-analytics.html');
+
+  await loadStats();
+  await loadActivityChart();
+  await loadHourlyChart();
+  await loadActionsChart();
+  await loadRolesChart();
+  await loadLastLogins();
+  await loadTopPanels();
+  await loadRecentActivities();
+
+  // Auto-refresh every 30 seconds
+  setInterval(loadStats, 30000);
+  setInterval(loadActivityChart, 60000);
+});
+</script>
+</body>
+</html>
