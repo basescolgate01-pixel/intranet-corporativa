@@ -368,11 +368,38 @@ function closeMobileMenu() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.sidebar a').forEach(function(link) {
-    link.addEventListener('click', closeMobileMenu);
-  });
   var overlay = document.getElementById('sidebarOverlay');
   if (overlay) { overlay.addEventListener('click', closeMobileMenu); }
+
+  // ── Transiciones de página ──────────────────────────────────────────────
+  // Intercepta clicks en links de navegación (.html) y hace fade-out antes
+  // de navegar. El fade-in de entrada está en shared.css (.main @pageEnter).
+  document.addEventListener('click', function(e) {
+    var link = e.target.closest('a[href]');
+    if (!link) return;
+    var href = link.getAttribute('href');
+    if (!href) return;
+
+    // Ignorar: anclas, javascript:, target=_blank, externos
+    if (href.startsWith('#') || href.startsWith('javascript:')) return;
+    if (link.getAttribute('target') === '_blank') return;
+    if (href.startsWith('http') && !href.includes(window.location.host)) return;
+    // Solo navegar a páginas HTML (no otros recursos)
+    if (!href.includes('.html') && !href.startsWith('/pages/') && !href.startsWith('../')) return;
+
+    e.preventDefault();
+    closeMobileMenu();
+
+    var main = document.querySelector('.main');
+    if (main) {
+      main.style.transition = 'opacity 0.18s ease, transform 0.18s ease';
+      main.style.opacity = '0';
+      main.style.transform = 'translateY(-5px)';
+      setTimeout(function() { window.location.href = href; }, 190);
+    } else {
+      window.location.href = href;
+    }
+  });
 });
 
 window.toggleTheme=toggleTheme; window.renderSidebar=renderSidebar; window.toggleSubmenu=toggleSubmenu;
