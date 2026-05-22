@@ -161,12 +161,7 @@ async function renderSidebar(session, activePage) {
   } else {
     /* Usuario: cargar menús asignados desde la API */
     try {
-      var _items = await getMenuForUser(session.id);
-      /* Filtrar páginas admin-only para no redirigir al usuario al hacer click */
-      var _adminPaths = ['users.html', 'permissions.html', 'logs.html', 'admin-analytics.html', 'menu-manager.html'];
-      flatItems = _items.filter(function(m) {
-        return !_adminPaths.some(function(p) { return m.path && m.path.includes(p); });
-      });
+      flatItems = await getMenuForUser(session.id) || [];
     } catch(e) {
       flatItems = [];
     }
