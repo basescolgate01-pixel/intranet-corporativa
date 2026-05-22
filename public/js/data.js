@@ -14,9 +14,13 @@ async function apiFetch(path, options = {}) {
   const res = await fetch(API + path, { ...options, headers });
 
   if (res.status === 401) {
-    localStorage.removeItem('intranet_token');
-    sessionStorage.removeItem('intranet_session');
-    window.location.href = '../index.html';
+    // silent: true → no redirigir (usado por el sidebar para evitar
+    // interrumpir la página si el token expiró entre navegaciones)
+    if (!options.silent) {
+      localStorage.removeItem('intranet_token');
+      sessionStorage.removeItem('intranet_session');
+      window.location.href = '../index.html';
+    }
     return null;
   }
 
@@ -164,6 +168,15 @@ async function getMenuForUser(userId) {
   const r = await apiFetch(`/api/menu/user/${userId}`);
   return (r||[]).map(normalizeMenuItem);
 }
+/* Versiones silenciosas para el sidebar: no redirigen si el token expiró */
+async function getMenuItemsSilent() {
+  const r = await apiFetch('/api/menu', { silent: true });
+  return (r||[]).map(normalizeMenuItem);
+}
+async function getMenuForUserSilent(userId) {
+  const r = await apiFetch(`/api/menu/user/${userId}`, { silent: true });
+  return (r||[]).map(normalizeMenuItem);
+}
 async function createMenuItem(data) {
   const r = await apiFetch('/api/menu', {
     method: 'POST',
@@ -249,6 +262,7 @@ window.getAccessiblePanels=getAccessiblePanels; window.createPanel=createPanel;
 window.updatePanel=updatePanel; window.deletePanel=deletePanel;
 window.getPanelPermissions=getPanelPermissions; window.setPanelPermissions=setPanelPermissions;
 window.getMenuItems=getMenuItems; window.getMenuForUser=getMenuForUser;
+window.getMenuItemsSilent=getMenuItemsSilent; window.getMenuForUserSilent=getMenuForUserSilent;
 window.createMenuItem=createMenuItem; window.updateMenuItem=updateMenuItem; window.deleteMenuItem=deleteMenuItem;
 window.getMenuPermissionsForUser=getMenuPermissionsForUser; window.setMenuPermissionsForUser=setMenuPermissionsForUser;
 window.buildMenuTree=buildMenuTree;

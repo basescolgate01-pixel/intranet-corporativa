@@ -144,11 +144,12 @@ async function renderSidebar(session, activePage) {
   /* Obtener ítems del menú */
   var flatItems;
   if (isAdmin) {
-    /* Admin: carga todos los ítems de la BD (ve todo) */
+    /* Admin: carga todos los ítems de la BD (ve todo). Silent = no redirige si token expira */
     try {
-      flatItems = await getMenuItems();
-    } catch(e) {
-      /* Fallback: lista fija si la API falla */
+      flatItems = await getMenuItemsSilent();
+    } catch(e) { flatItems = []; }
+    /* Fallback si la API no devuelve nada */
+    if (!flatItems.length) {
       flatItems = [
         { id:1, label:'Mis Paneles', icon:'grid',       path:'/pages/panels.html',              parentId:null, orderIndex:1, isActive:true },
         { id:2, label:'Dashboard',   icon:'activity',   path:'/pages/dashboard.html',            parentId:null, orderIndex:2, isActive:true },
@@ -159,9 +160,9 @@ async function renderSidebar(session, activePage) {
       ];
     }
   } else {
-    /* Usuario: cargar menús asignados desde la API */
+    /* Usuario: carga menús asignados. Silent = no redirige si token expira */
     try {
-      flatItems = await getMenuForUser(session.id) || [];
+      flatItems = await getMenuForUserSilent(session.id) || [];
     } catch(e) {
       flatItems = [];
     }
