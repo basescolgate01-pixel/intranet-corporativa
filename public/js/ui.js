@@ -144,15 +144,20 @@ async function renderSidebar(session, activePage) {
   /* Obtener ítems del menú */
   var flatItems;
   if (isAdmin) {
-    /* Admin: menú fijo predefinido */
-    flatItems = [
-      { id:1, label:'Mis Paneles', icon:'grid',       path:'/pages/panels.html',              parentId:null, orderIndex:1, isActive:true },
-      { id:2, label:'Dashboard',   icon:'activity',   path:'/pages/dashboard.html',            parentId:null, orderIndex:2, isActive:true },
-      { id:3, label:'Usuarios',    icon:'users',      path:'/pages/users.html',                parentId:null, orderIndex:3, isActive:true },
-      { id:4, label:'Permisos',    icon:'lock',       path:'/pages/permissions.html',          parentId:null, orderIndex:4, isActive:true },
-      { id:5, label:'Registro',    icon:'file-text',  path:'/pages/logs.html',                 parentId:null, orderIndex:5, isActive:true },
-      { id:6, label:'Analytics',   icon:'chart',      path:'/pages/admin-analytics.html',      parentId:null, orderIndex:6, isActive:true },
-    ];
+    /* Admin: carga todos los ítems de la BD (ve todo) */
+    try {
+      flatItems = await getMenuItems();
+    } catch(e) {
+      /* Fallback: lista fija si la API falla */
+      flatItems = [
+        { id:1, label:'Mis Paneles', icon:'grid',       path:'/pages/panels.html',              parentId:null, orderIndex:1, isActive:true },
+        { id:2, label:'Dashboard',   icon:'activity',   path:'/pages/dashboard.html',            parentId:null, orderIndex:2, isActive:true },
+        { id:3, label:'Usuarios',    icon:'users',      path:'/pages/users.html',                parentId:null, orderIndex:3, isActive:true },
+        { id:4, label:'Permisos',    icon:'lock',       path:'/pages/permissions.html',          parentId:null, orderIndex:4, isActive:true },
+        { id:5, label:'Registro',    icon:'file-text',  path:'/pages/logs.html',                 parentId:null, orderIndex:5, isActive:true },
+        { id:6, label:'Analytics',   icon:'chart',      path:'/pages/admin-analytics.html',      parentId:null, orderIndex:6, isActive:true },
+      ];
+    }
   } else {
     /* Usuario: cargar menús asignados desde la API */
     try {
