@@ -194,6 +194,42 @@ async function initDB() {
   }
 }
 
+// Ensure all default menu items exist (idempotent — safe to run on every startup)
+async function ensureDefaultMenuItems() {
+  const client = await pool.connect();
+  try {
+    const defaults = [
+      { label: 'Mis Paneles', icon: 'grid',       path: 'pages/panels.html',          order_index: 1 },
+      { label: 'Dashboard',   icon: 'activity',   path: 'pages/dashboard.html',       order_index: 2 },
+      { label: 'Usuarios',    icon: 'users',      path: 'pages/users.html',           order_index: 3 },
+      { label: 'Permisos',    icon: 'lock',       path: 'pages/permissions.html',     order_index: 4 },
+      { label: 'Registro',    icon: 'file-text',  path: 'pages/logs.html',            order_index: 5 },
+      { label: 'Analytics',   icon: 'chart',      path: 'pages/admin-analytics.html', order_index: 6 },
+    ];
+
+    for (const item of defaults) {
+      const existing = await client.query('SELECT id FROM menu_items WHERE label = $1', [item.label]);
+      if (existing.rows.length === 0) {
+        const res = await client.query(
+          `INSERT INTO menu_items (label, icon, path, parent_id, order_index, is_active, created_by)
+           VALUES ($1, $2, $3, NULL, $4, true, 1) RETURNING id`,
+          [item.label, item.icon, item.path, item.order_index]
+        );
+        await client.query(
+          'INSERT INTO menu_user_access (menu_item_id, user_id) VALUES ($1, 1) ON CONFLICT DO NOTHING',
+          [res.rows[0].id]
+        );
+        console.log(`→ Created default menu item: ${item.label}`);
+      }
+    }
+    console.log('✓ Default menu items verified');
+  } catch (e) {
+    console.error('Error ensuring default menu items:', e.message);
+  } finally {
+    client.release();
+  }
+}
+
 // Ensure Analytics menu item exists (for backwards compatibility with existing DBs)
 async function ensureAnalyticsMenu() {
   const client = await pool.connect();
@@ -235,4 +271,4 @@ async function ensureAnalyticsMenu() {
   }
 }
 
-module.exports = { pool, initDB, ensureAnalyticsMenu };
+module.exports = { pool, initDB, ensureAnalyticsMenu, ensureDefaultMenuItems };

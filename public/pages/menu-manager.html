@@ -985,13 +985,8 @@
     const head = document.getElementById('menuUsersHead');
     const body = document.getElementById('menuUsersBody');
 
-    // Páginas admin-only que no deben asignarse a usuarios regulares
-    const ADMIN_ONLY_PATHS = ['users.html', 'permissions.html', 'logs.html', 'admin-analytics.html', 'menu-manager.html'];
-
-    // Get root menu items (no parent), excluyendo páginas exclusivas de admin
-    const rootMenuItems = _allMenuItems.filter(m =>
-      !m.parentId && !ADMIN_ONLY_PATHS.some(p => m.path && m.path.includes(p))
-    );
+    // Get root menu items (no parent)
+    const rootMenuItems = _allMenuItems.filter(m => !m.parentId);
 
     if (!_allUsers.length || !rootMenuItems.length) {
       body.innerHTML = `
@@ -1016,9 +1011,7 @@
     const headerRow = `<tr>
       <th class="user-col">Usuario</th>
       ${rootMenuItems.map(menu => `
-        <th title="${menu.label}">
-          ${menu.icon || '📋'} ${menu.label}
-        </th>
+        <th title="${menu.label}">${menu.label}</th>
       `).join('')}
     </tr>`;
     head.innerHTML = headerRow;
