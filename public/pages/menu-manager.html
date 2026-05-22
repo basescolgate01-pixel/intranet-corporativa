@@ -985,8 +985,13 @@
     const head = document.getElementById('menuUsersHead');
     const body = document.getElementById('menuUsersBody');
 
-    // Get root menu items (no parent)
-    const rootMenuItems = _allMenuItems.filter(m => !m.parentId);
+    // Páginas admin-only que no deben asignarse a usuarios regulares
+    const ADMIN_ONLY_PATHS = ['users.html', 'permissions.html', 'logs.html', 'admin-analytics.html', 'menu-manager.html'];
+
+    // Get root menu items (no parent), excluyendo páginas exclusivas de admin
+    const rootMenuItems = _allMenuItems.filter(m =>
+      !m.parentId && !ADMIN_ONLY_PATHS.some(p => m.path && m.path.includes(p))
+    );
 
     if (!_allUsers.length || !rootMenuItems.length) {
       body.innerHTML = `
