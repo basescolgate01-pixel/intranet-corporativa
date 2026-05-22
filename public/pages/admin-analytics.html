@@ -800,11 +800,8 @@ async function refreshAnalytics() {
 
 // Init
 document.addEventListener('DOMContentLoaded', async () => {
-  session = requireAuth(true); // true = admin only
-  if (!session) {
-    window.location.href = 'dashboard.html';
-    return;
-  }
+  session = await requireAuthMenu();
+  if (!session) return;
 
   renderSidebar(session, '/pages/admin-analytics.html');
 

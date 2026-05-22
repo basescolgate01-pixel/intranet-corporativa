@@ -44,14 +44,37 @@ function requireUser() {
   return session;
 }
 
+/* Versión dinámica: admin pasa siempre; usuario pasa si tiene este
+   menú asignado en el Gestor de Menús (carga desde la API silenciosamente) */
+async function requireAuthMenu() {
+  const session = getSession();
+  if (!session) { window.location.href = '../index.html'; return null; }
+  if (session.role === 'admin') return session;
+
+  try {
+    const items = await window.getMenuForUserSilent(session.id);
+    const current = window.location.pathname; // ej: /pages/users.html
+    const hasAccess = (items || []).some(function(m) {
+      const mp = m.path.startsWith('/') ? m.path : '/' + m.path;
+      return current === mp || current.endsWith(mp.replace(/^\//, '/'));
+    });
+    if (hasAccess) return session;
+  } catch(e) {}
+
+  // Sin acceso → volver al home del usuario
+  window.location.href = 'panels.html';
+  return null;
+}
+
 async function logout(userId) {
   clearSession();
   window.location.href = '../index.html';
 }
 
-window.saveSession  = saveSession;
-window.getSession   = getSession;
-window.clearSession = clearSession;
-window.requireAuth  = requireAuth;
-window.requireUser  = requireUser;
-window.logout       = logout;
+window.saveSession       = saveSession;
+window.getSession        = getSession;
+window.clearSession      = clearSession;
+window.requireAuth       = requireAuth;
+window.requireAuthMenu   = requireAuthMenu;
+window.requireUser       = requireUser;
+window.logout            = logout;

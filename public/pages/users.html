@@ -193,14 +193,16 @@
 <script src="../js/ui.js"></script>
 <script>
   window._activePage = 'users';
-  const session = requireAuth(true);
   let deleteTargetId = null;
+  let session = null;
 
-  if (session) {
+  (async function() {
+    session = await requireAuthMenu();
+    if (!session) return;
     renderSidebar(session, 'users');
     updateBellBadge(session.id);
     renderUsers();
-  }
+  })();
 
   async function renderUsers() {
     const q = (document.getElementById('searchUsers')?.value || '').toLowerCase();

@@ -351,14 +351,16 @@
 <script src="../js/auth.js"></script>
 <script src="../js/ui.js"></script>
 <script>
-  const session = requireAuth(true);
+  let session = null;
   let permState = {}; // permState[panelId][userId] = boolean
   let panels = [];
   let users = [];
   let changeCount = 0;
   let refreshInterval = null;
 
-  if (session) {
+  (async function() {
+    session = await requireAuthMenu();
+    if (!session) return;
     window._activePage = 'permissions';
     renderSidebar(session, 'permissions');
     updateBellBadge(session.id);

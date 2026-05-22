@@ -175,13 +175,15 @@
 <script src="../js/auth.js"></script>
 <script src="../js/ui.js"></script>
 <script>
-  const session = requireAuth(true);
-  if (session) {
+  let session = null;
+  (async function() {
+    session = await requireAuthMenu();
+    if (!session) return;
     window._activePage = 'logs';
     renderSidebar(session, 'logs');
     updateBellBadge(session.id);
     initLogs();
-  }
+  })();
 
   async function initLogs() {
     const users = await getUsers();
