@@ -156,12 +156,19 @@ router.get('/panels/:id', authMiddleware, async (req, res) => {
 // GET /api/panels/user/:userId
 router.get('/panels/user/:userId', authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT p.* FROM panels p
-      INNER JOIN permissions perm ON p.id = perm.panel_id
-      WHERE perm.user_id = $1
-      ORDER BY p.id
-    `, [req.params.userId]);
+    // Admin siempre ve todos los paneles
+    const userCheck = await pool.query('SELECT role FROM users WHERE id = $1', [req.params.userId]);
+    const isAdmin = userCheck.rows[0]?.role === 'admin';
+
+    const result = isAdmin
+      ? await pool.query('SELECT * FROM panels ORDER BY id')
+      : await pool.query(`
+          SELECT p.* FROM panels p
+          INNER JOIN permissions perm ON p.id = perm.panel_id
+          WHERE perm.user_id = $1
+          ORDER BY p.id
+        `, [req.params.userId]);
+
     res.json(result.rows);
   } catch (e) {
     res.status(500).json({ error: e.message });
